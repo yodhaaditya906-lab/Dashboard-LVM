@@ -899,7 +899,7 @@ body.powerbi-theme {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: none !important;
   flex-shrink: 0;
 }
 
@@ -929,6 +929,7 @@ body.powerbi-theme {
   color: #ffffff;
   font-family: inherit;
   font-size: 12px;
+  transition: none !important;
 }
 
 .excel-filter-popup.hidden {
@@ -955,7 +956,7 @@ body.powerbi-theme {
   font-size: 11.5px;
   font-weight: 600;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: none !important;
 }
 
 .excel-filter-sort-btn:hover {
@@ -987,6 +988,7 @@ body.powerbi-theme {
   font-size: 11.5px;
   margin-bottom: 6px;
   outline: none;
+  transition: none !important;
 }
 
 .excel-filter-search-box:focus {
@@ -1021,6 +1023,7 @@ body.powerbi-theme {
   user-select: none;
   font-size: 11.5px;
   color: #cbd5e1;
+  transition: none !important;
 }
 
 .excel-filter-item:hover {
@@ -1062,7 +1065,7 @@ body.powerbi-theme {
   font-weight: 700;
   cursor: pointer;
   border: none;
-  transition: all 0.15s ease;
+  transition: none !important;
 }
 
 .excel-filter-btn-clear {
@@ -1081,6 +1084,6 @@ body.powerbi-theme {
 
 .excel-filter-btn-apply:hover {
   box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
-  transform: translateY(-1px);
 }
+
 

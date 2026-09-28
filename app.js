@@ -607,21 +607,8 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="excel-filter-divider"></div>
       <input type="text" class="excel-filter-search-box" id="popup-search-box" placeholder="Cari nilai...">
-      <div class="excel-filter-list" id="popup-checkbox-list">
-        <label class="excel-filter-item">
-          <input type="checkbox" id="popup-select-all" ${!currentFilterSet ? 'checked' : ''}>
-          <span class="excel-filter-item-text" style="font-weight: 700; color: #ffffff;">(Pilih Semua)</span>
-        </label>
-        ${distinctValues.map(val => {
-          const isChecked = !currentFilterSet || currentFilterSet.has(val);
-          return `
-            <label class="excel-filter-item" data-val="${escapeAttr(val)}">
-              <input type="checkbox" class="popup-item-cb" data-val="${escapeAttr(val)}" ${isChecked ? 'checked' : ''}>
-              <span class="excel-filter-item-text" title="${escapeAttr(val)}">${escapeAttr(val)}</span>
-              <span class="excel-filter-item-count">(${valueCounts[val]})</span>
-            </label>
-          `;
-        }).join('')}
+      <div class="excel-filter-list" id="popup-checkbox-list-container">
+        <!-- Rendered instantly via helper -->
       </div>
       <div class="excel-filter-footer">
         <button class="excel-filter-action-btn excel-filter-btn-clear" id="popup-btn-clear">Hapus Filter</button>
@@ -635,15 +622,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
     const POPUP_WIDTH = 250;
 
-    // Align popup's right edge with button's right edge for a clean Excel dropdown feel
     let popupLeft = (btnRect.right + scrollLeft) - POPUP_WIDTH;
-
-    // If it goes past left margin of screen, align popup's left edge to button's left edge
-    if (popupLeft < 10) {
-      popupLeft = btnRect.left + scrollLeft;
-    }
-
-    // Final viewport boundary guard
+    if (popupLeft < 10) popupLeft = btnRect.left + scrollLeft;
     if (popupLeft < 10) popupLeft = 10;
     if (popupLeft + POPUP_WIDTH > window.innerWidth - 10) {
       popupLeft = window.innerWidth - POPUP_WIDTH - 10;
@@ -651,33 +631,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filterPopupEl.style.top = `${btnRect.bottom + scrollTop + 4}px`;
     filterPopupEl.style.left = `${popupLeft}px`;
-
     filterPopupEl.classList.remove('hidden');
 
-    // Event Listeners inside Popup
-    const selectAllCb = document.getElementById('popup-select-all');
-    const itemCbs = filterPopupEl.querySelectorAll('.popup-item-cb');
+    // Helper to render checkbox items (max 150 for 0ms instant speed)
+    function renderPopupCheckboxList(filterSearchText = '') {
+      const checkboxContainer = document.getElementById('popup-checkbox-list-container');
+      if (!checkboxContainer) return;
+
+      const query = filterSearchText.toLowerCase().trim();
+      const filteredDistinct = query 
+        ? distinctValues.filter(val => val.toLowerCase().includes(query))
+        : distinctValues;
+
+      const MAX_ITEMS = 150;
+      const isCapped = filteredDistinct.length > MAX_ITEMS;
+      const visibleValues = isCapped ? filteredDistinct.slice(0, MAX_ITEMS) : filteredDistinct;
+
+      let html = `
+        <label class="excel-filter-item">
+          <input type="checkbox" id="popup-select-all" ${!currentFilterSet ? 'checked' : ''}>
+          <span class="excel-filter-item-text" style="font-weight: 700; color: #ffffff;">(Pilih Semua)</span>
+        </label>
+      `;
+
+      html += visibleValues.map(val => {
+        const isChecked = !currentFilterSet || currentFilterSet.has(val);
+        return `
+          <label class="excel-filter-item" data-val="${escapeAttr(val)}">
+            <input type="checkbox" class="popup-item-cb" data-val="${escapeAttr(val)}" ${isChecked ? 'checked' : ''}>
+            <span class="excel-filter-item-text" title="${escapeAttr(val)}">${escapeAttr(val)}</span>
+            <span class="excel-filter-item-count">(${valueCounts[val]})</span>
+          </label>
+        `;
+      }).join('');
+
+      if (isCapped) {
+        html += `
+          <div style="font-size: 10px; color: #38bdf8; font-style: italic; padding: 4px; text-align: center;">
+            Menampilkan 150 dari ${filteredDistinct.length} nilai. Ketik di pencarian untuk menyempitkan.
+          </div>
+        `;
+      }
+
+      checkboxContainer.innerHTML = html;
+
+      // Re-bind select all
+      const selectAllCb = document.getElementById('popup-select-all');
+      if (selectAllCb) {
+        selectAllCb.addEventListener('change', (e) => {
+          const checked = e.target.checked;
+          checkboxContainer.querySelectorAll('.popup-item-cb').forEach(cb => {
+            cb.checked = checked;
+          });
+        });
+      }
+    }
+
+    renderPopupCheckboxList('');
+
     const searchBox = document.getElementById('popup-search-box');
-
-    selectAllCb.addEventListener('change', (e) => {
-      const checked = e.target.checked;
-      itemCbs.forEach(cb => {
-        if (cb.closest('.excel-filter-item').style.display !== 'none') {
-          cb.checked = checked;
-        }
-      });
-    });
-
     searchBox.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      filterPopupEl.querySelectorAll('.excel-filter-item[data-val]').forEach(item => {
-        const text = (item.dataset.val || '').toLowerCase();
-        if (!q || text.includes(q)) {
-          item.style.display = 'flex';
-        } else {
-          item.style.display = 'none';
-        }
-      });
+      renderPopupCheckboxList(e.target.value);
     });
 
     filterPopupEl.querySelectorAll('.excel-filter-sort-btn').forEach(btn => {
@@ -707,15 +721,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('popup-btn-apply').addEventListener('click', () => {
       const selectedSet = new Set();
-      let totalVisible = 0;
+      const checkboxContainer = document.getElementById('popup-checkbox-list-container');
+      const itemCbs = checkboxContainer ? checkboxContainer.querySelectorAll('.popup-item-cb') : [];
+      
+      let totalChecked = 0;
       itemCbs.forEach(cb => {
-        totalVisible++;
         if (cb.checked) {
           selectedSet.add(cb.dataset.val);
+          totalChecked++;
         }
       });
 
-      if (selectedSet.size === totalVisible || selectedSet.size === distinctValues.length) {
+      const selectAllCb = document.getElementById('popup-select-all');
+      if ((selectAllCb && selectAllCb.checked) || selectedSet.size === distinctValues.length) {
         columnFilters[colKey] = null;
       } else {
         columnFilters[colKey] = selectedSet;
