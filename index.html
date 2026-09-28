@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bank Mandiri - Live Ranking & Monitoring Debitur SGP</title>
+  
+  <!-- Font: Segoe UI / Arial system stack + Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom PowerBI Desktop Replica CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="powerbi-theme">
+
+  <!-- TOP LIVE SYNC BAR (Clean SGP Viewer Mode) -->
+  <div class="top-live-bar">
+    <div class="live-status">
+      <span class="status-pulse" id="pulse-dot"></span>
+      <span id="sync-status-text">Live Sync: Terhubung ke Data Master Spreadsheet...</span>
+    </div>
+    <div class="top-actions">
+      <button id="btn-sync-now" class="btn-live-action" title="Refresh data sekarang">
+        🔄 Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <!-- PowerBI Report Viewport Canvas -->
+  <div class="powerbi-canvas">
+    
+    <!-- TOP ROW: KPI CARDS & FILTER BAR -->
+    <div class="top-row-container">
+      
+      <!-- USAK Genuine SGP Summary Table Card (Replaces KPI Cards as per design spec) -->
+      <div class="sgp-summary-card">
+        <div class="sgp-table-wrapper custom-scrollbar">
+          <table class="sgp-summary-table">
+            <thead>
+              <tr>
+                <th rowspan="2" class="th-sgp-name active-blue-border">Nama SGP</th>
+                <th colspan="2" class="th-usak-genuine">USAK Genuine</th>
+              </tr>
+              <tr>
+                <th class="th-month">Agustus</th>
+                <th class="th-month">September</th>
+              </tr>
+            </thead>
+            <tbody id="sgp-summary-tbody">
+              <!-- Rows dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Spacer -->
+      <div class="top-row-spacer"></div>
+
+      <!-- MKA Selector Panel (Top Right) -->
+      <div class="mka-filter-panel">
+        <div class="mka-info-box">
+          <div class="mka-label">Nama MKA Terpilih</div>
+          <div class="mka-selected-name" id="selected-mka-name">Silakan Masukkan NIP</div>
+        </div>
+        <div class="mka-dropdown-box">
+          <label for="nip-mka-select" class="nip-label">Nip MKA</label>
+          <div class="select-wrapper">
+            <select id="nip-mka-select" class="nip-select">
+              <option value="ALL">All</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAIN MIDDLE SECTION: DEBITUR TABLE -->
+    <div class="debitur-table-container custom-scrollbar">
+      <table class="debitur-table" id="debitur-table">
+        <thead>
+          <tr>
+            <th class="th-no">No.</th>
+            <th class="th-cif">cif</th>
+            <th class="th-debitur">nama_debitur</th>
+            <th class="th-sgp">nama_sgp</th>
+            <th class="th-frek">frek_30days</th>
+            <th class="th-sv">sv_30days</th>
+            <th class="th-gap">Gap Transaksi</th>
+            <th class="th-ureg">ureg_lvm</th>
+            <th class="th-usak">usak_lvm</th>
+          </tr>
+        </thead>
+        <tbody id="debitur-tbody">
+          <!-- Rows dynamically rendered -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- BOTTOM SECTION: YELLOW LEADERBOARD CARD -->
+    <div class="bottom-section">
+      
+      <!-- Yellow Leaderboard Card (Lower Left) -->
+      <div class="leaderboard-card-yellow">
+        <div class="leaderboard-table-container custom-scrollbar">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th class="th-rank-no">No</th>
+                <th class="th-rank-name">
+                  <span>Rank Nama MKA</span>
+                  <span class="sort-icon">▼</span>
+                </th>
+                <th class="th-rank-usak">Jumlah USAK</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody">
+              <!-- Rows dynamically rendered -->
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2">Total Overall</td>
+                <td class="total-cell" id="leaderboard-total-val">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
