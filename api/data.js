@@ -206,12 +206,17 @@ const http = require('http');
 function fetchHttpsText(targetUrl) {
   return new Promise((resolve, reject) => {
     const request = (urlStr) => {
-      const lib = urlStr.startsWith('https') ? https : http;
+      let parsed;
+      try {
+        parsed = new URL(urlStr);
+      } catch (e) {
+        return reject(e);
+      }
+      const lib = parsed.protocol === 'https:' ? https : http;
       lib.get(urlStr, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           let redirectUrl = res.headers.location;
           if (redirectUrl.startsWith('/')) {
-            const parsed = new URL(urlStr);
             redirectUrl = `${parsed.protocol}//${parsed.host}${redirectUrl}`;
           }
           return request(redirectUrl);
@@ -228,9 +233,23 @@ function fetchHttpsText(targetUrl) {
   });
 }
 
+function sendJsonResponse(res, statusCode, data) {
+  if (typeof res.status === 'function') {
+    return res.status(statusCode).json(data);
+  }
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Access-Control-Allow-Origin': '*',
+    'Cache-Control': 'no-cache, no-store, must-revalidate'
+  });
+  res.end(JSON.stringify(data));
+}
+
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  if (typeof res.setHeader === 'function') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
 
   const config = getConfig();
   const csvTarget = getCsvUrl(config.googleSheetUrl);
@@ -240,21 +259,21 @@ module.exports = async function handler(req, res) {
       const localPath = path.join(process.cwd(), 'data.csv');
       const localCsv = fs.readFileSync(localPath, 'utf8');
       const parsed = processRawCsv(localCsv);
-      return res.status(200).json(parsed);
+      return sendJsonResponse(res, 200, parsed);
     }
 
     const csvText = await fetchHttpsText(csvTarget);
     const parsed = processRawCsv(csvText);
-    return res.status(200).json(parsed);
+    return sendJsonResponse(res, 200, parsed);
   } catch (err) {
     console.error('Error fetching CSV from remote:', err.message);
     try {
       const localPath = path.join(process.cwd(), 'data.csv');
       const localCsv = fs.readFileSync(localPath, 'utf8');
       const parsed = processRawCsv(localCsv);
-      return res.status(200).json(parsed);
+      return sendJsonResponse(res, 200, parsed);
     } catch (e) {
-      return res.status(500).json({ error: 'Failed to parse data' });
+      return sendJsonResponse(res, 500, { error: 'Failed to parse data' });
     }
   }
 };
