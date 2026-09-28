@@ -274,12 +274,12 @@ body.powerbi-theme {
 
 .mka-dropdown-box {
   background-color: #0000aa;
-  padding: 10px 14px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
-  width: 320px;
+  gap: 5px;
+  width: 250px;
   flex-shrink: 0;
   box-sizing: border-box;
 }
@@ -296,7 +296,7 @@ body.powerbi-theme {
   background-color: #000055;
   border: 1px solid #1d4ed8;
   color: #ffffff;
-  padding: 5px 10px;
+  padding: 4px 8px;
   border-radius: 3px;
   font-size: 12px;
   outline: none;
@@ -325,13 +325,13 @@ body.powerbi-theme {
   border: 1px solid #1d4ed8;
   border-radius: 3px;
   color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   outline: none;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  padding: 5px 28px 5px 10px;
+  padding: 4px 24px 4px 8px;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -340,7 +340,8 @@ body.powerbi-theme {
 .nip-select option {
   background-color: #000080;
   color: #ffffff;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .select-wrapper::after {

@@ -79,7 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
     masterUnitList.forEach(item => {
       if (item.kodeUnit && item.kodeUnit.trim() !== '') {
         const key = item.kodeUnit.trim();
-        const label = item.namaMka ? `${item.kodeUnit} - ${item.namaMka}` : item.kodeUnit;
+        let mkaName = item.namaMka ? item.namaMka.trim() : '';
+        if (mkaName.length > 24) {
+          mkaName = mkaName.substring(0, 22) + '...';
+        }
+        const label = mkaName ? `${key} - ${mkaName}` : key;
 
         if (filterQuery && !label.toLowerCase().includes(filterQuery)) {
           return;
