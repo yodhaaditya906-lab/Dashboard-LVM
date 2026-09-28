@@ -126,13 +126,16 @@ function processRawCsv(csvText) {
 
     if (!cif && !debitur && !kodeUnitInput && !namaSgpInput) return;
 
+    // HIERARCHICAL FORWARD-FILL BLOCK RULE:
+    // Reset child context (MKA & SGP) whenever a parent block (Kode Unit) changes!
     if (kodeUnitInput && kodeUnitInput.length > 0) {
       currentKodeUnit = kodeUnitInput;
-    }
-    if (namaMkaInput && namaMkaInput.length > 0) {
+      currentNamaMka = namaMkaInput || '';
+      currentNamaSgp = namaSgpInput || '';
+    } else if (namaMkaInput && namaMkaInput.length > 0) {
       currentNamaMka = namaMkaInput;
-    }
-    if (namaSgpInput && namaSgpInput.length > 0) {
+      currentNamaSgp = namaSgpInput || '';
+    } else if (namaSgpInput && namaSgpInput.length > 0) {
       currentNamaSgp = namaSgpInput;
     }
 

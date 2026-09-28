@@ -157,28 +157,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let filtered = masterDebiturData;
 
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      const activeMkaName = resolveKodeUnitName(selectedKodeUnit).toUpperCase();
-      filtered = masterDebiturData.filter(d => {
-        const matchByUnit = d.kodeUnit === selectedKodeUnit;
-        const matchByName = d.namaMka && activeMkaName.includes(d.namaMka.toUpperCase());
-
-        return matchByUnit || matchByName;
-      });
+      filtered = masterDebiturData.filter(d => d.kodeUnit === selectedKodeUnit);
     }
 
     let filterUsakCount = 0;
     let filterUregCount = 0;
 
-    const rowsHtml = [];
     const totalCount = filtered.length;
-
     for (let idx = 0; idx < totalCount; idx++) {
       const d = filtered[idx];
-      const isGenuine = d.isGenuine;
-      if (isGenuine) filterUsakCount++;
+      if (d.isGenuine) filterUsakCount++;
       if (d.status && d.status.toUpperCase().includes('UREG') && !d.status.toUpperCase().includes('NON')) {
         filterUregCount++;
       }
+    }
+
+    // Limit DOM rendering to top 500 rows when viewing ALL (prevents Chrome DOM buffer crashes)
+    const MAX_DOM_ROWS = 500;
+    const renderLimit = (selectedKodeUnit === 'ALL') ? Math.min(totalCount, MAX_DOM_ROWS) : totalCount;
+
+    const rowsHtml = [];
+    for (let idx = 0; idx < renderLimit; idx++) {
+      const d = filtered[idx];
 
       rowsHtml.push(`
         <tr class="${d.rowStyle || 'row-dark'}">
@@ -190,6 +190,16 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="td-right">${(d.transaksi || 0).toLocaleString('id-ID')}</td>
           <td class="td-right">${(d.salesVolume || 0).toLocaleString('id-ID')}</td>
           <td class="cell-cyan-text">${d.status || '-'}</td>
+        </tr>
+      `);
+    }
+
+    if (selectedKodeUnit === 'ALL' && totalCount > MAX_DOM_ROWS) {
+      rowsHtml.push(`
+        <tr class="row-dark">
+          <td colspan="8" style="text-align: center; padding: 10px; color: #38bdf8; font-style: italic;">
+            Menampilkan ${MAX_DOM_ROWS.toLocaleString('id-ID')} dari ${totalCount.toLocaleString('id-ID')} total debitur. Silakan gunakan filter Kode Unit di kanan atas untuk melihat debitur spesifik.
+          </td>
         </tr>
       `);
     }
@@ -212,12 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let filtered = masterDebiturData;
 
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      const activeMkaName = resolveKodeUnitName(selectedKodeUnit).toUpperCase();
-      filtered = masterDebiturData.filter(d => {
-        const matchByUnit = d.kodeUnit === selectedKodeUnit;
-        const matchByName = d.namaMka && activeMkaName.includes(d.namaMka.toUpperCase());
-        return matchByUnit || matchByName;
-      });
+      filtered = masterDebiturData.filter(d => d.kodeUnit === selectedKodeUnit);
     }
 
     // Map counts by SGP
