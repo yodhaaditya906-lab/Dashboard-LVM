@@ -143,8 +143,8 @@ body.powerbi-theme {
   background-color: #020712;
   border: 1px solid #142854;
   border-radius: 2px;
-  min-width: 380px;
-  max-width: 480px;
+  width: 440px;
+  flex-shrink: 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
   overflow: hidden;
 }
@@ -157,6 +157,7 @@ body.powerbi-theme {
 
 .sgp-summary-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 13px;
@@ -169,9 +170,10 @@ body.powerbi-theme {
   color: #000000;
   font-weight: 600;
   border: 1px solid #000000;
-  padding: 4px 10px;
+  padding: 4px 8px;
   text-align: center;
   font-size: 13px;
+  box-sizing: border-box;
 }
 
 .sgp-summary-table thead tr:first-child th {
@@ -189,7 +191,7 @@ body.powerbi-theme {
 .sgp-summary-table th.active-blue-border {
   border: 2.5px solid #0078d4 !important; /* Distinct blue focus outline as in Image 2 */
   vertical-align: middle;
-  min-width: 170px;
+  width: 55%;
   text-align: center;
   position: sticky;
   top: 0;
@@ -199,21 +201,26 @@ body.powerbi-theme {
 .sgp-summary-table th.th-usak-genuine {
   font-size: 13.5px;
   font-weight: 600;
+  width: 45%;
 }
 
 .sgp-summary-table th.th-month {
   font-size: 12.5px;
   font-weight: 600;
-  min-width: 85px;
+  width: 22.5%;
 }
 
 .sgp-summary-table td {
   background-color: #c8c8c8; /* Solid light slate/grey matching Image 2 */
   color: #000000;
   border: 1px solid #444444;
-  padding: 4px 10px;
-  font-size: 13px;
+  padding: 4px 8px;
+  font-size: 12.5px;
   font-weight: 500;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .sgp-summary-table td.td-center {
@@ -412,6 +419,8 @@ body.powerbi-theme {
 
 .debitur-table {
   width: 100%;
+  min-width: 1200px;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 12.5px;
   text-align: left;
@@ -429,12 +438,17 @@ body.powerbi-theme {
   z-index: 10;
   border-right: 1px solid rgba(255,255,255,0.1);
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
-.debitur-table th.th-transaksi,
-.debitur-table th.th-sv {
-  text-align: right;
-}
+.debitur-table th.th-no { width: 50px; }
+.debitur-table th.th-sgp { width: 230px; }
+.debitur-table th.th-cif { width: 130px; }
+.debitur-table th.th-debitur { width: 240px; }
+.debitur-table th.th-rekening { width: 165px; }
+.debitur-table th.th-transaksi { width: 95px; text-align: right; }
+.debitur-table th.th-sv { width: 125px; text-align: right; }
+.debitur-table th.th-status { width: 140px; }
 
 /* Table Rows & Cells */
 .debitur-table td {
@@ -442,6 +456,9 @@ body.powerbi-theme {
   border-bottom: 1px solid #111a33;
   color: #ffffff;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Row Styling Variants from Screenshot */
@@ -489,6 +506,7 @@ body.powerbi-theme {
   border: 3px solid #cca000;
   border-radius: 4px;
   width: 440px;
+  flex-shrink: 0;
   box-shadow: 0 6px 20px rgba(0,0,0,0.7);
   overflow: hidden;
 }
@@ -501,6 +519,7 @@ body.powerbi-theme {
 
 .leaderboard-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 12px;
 }
@@ -517,21 +536,18 @@ body.powerbi-theme {
   top: 0;
   z-index: 10;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  box-sizing: border-box;
 }
+
+.leaderboard-table th.th-rank-no { width: 45px; }
+.leaderboard-table th.th-rank-name { width: 285px; text-align: left; }
+.leaderboard-table th.th-rank-usak { width: 110px; text-align: right; }
 
 .th-rank-name-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-}
-
-.leaderboard-table th.th-rank-name {
-  text-align: left;
-}
-
-.leaderboard-table th.th-rank-usak {
-  text-align: right;
 }
 
 .sort-icon {
@@ -545,6 +561,10 @@ body.powerbi-theme {
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 /* Row Background Variations inside Leaderboard */

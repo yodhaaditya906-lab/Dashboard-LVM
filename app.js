@@ -119,6 +119,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return keyVal; // Fallback
   }
 
+  function escapeAttr(str) {
+    if (!str) return '';
+    return String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   // Render Leaderboard (Yellow Card - Rank by Kode Unit)
   function renderLeaderboard() {
     const tbody = document.getElementById('leaderboard-tbody');
@@ -142,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tr.innerHTML = `
         <td class="rank-num">${item.rank}</td>
-        <td>${item.name}</td>
+        <td title="${escapeAttr(item.name)}">${item.name}</td>
         <td class="rank-usak-val">${item.usakCount}</td>
       `;
 
@@ -202,16 +207,22 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let idx = 0; idx < renderLimit; idx++) {
       const d = filtered[idx];
 
+      const sgpText = d.sgp || '-';
+      const cifText = d.cif || '-';
+      const debText = d.debitur || '-';
+      const rekText = d.rekening || '-';
+      const stText = d.status || '-';
+
       rowsHtml.push(`
         <tr class="${d.rowStyle || 'row-dark'}">
           <td>${idx + 1}</td>
-          <td>${d.sgp || '-'}</td>
-          <td>${d.cif || '-'}</td>
-          <td>${d.debitur || '-'}</td>
-          <td>${d.rekening || '-'}</td>
+          <td title="${escapeAttr(sgpText)}">${sgpText}</td>
+          <td title="${escapeAttr(cifText)}">${cifText}</td>
+          <td title="${escapeAttr(debText)}">${debText}</td>
+          <td title="${escapeAttr(rekText)}">${rekText}</td>
           <td class="td-right">${(d.transaksi || 0).toLocaleString('id-ID')}</td>
           <td class="td-right">${(d.salesVolume || 0).toLocaleString('id-ID')}</td>
-          <td class="cell-cyan-text">${d.status || '-'}</td>
+          <td class="cell-cyan-text" title="${escapeAttr(stText)}">${stText}</td>
         </tr>
       `);
     }
@@ -288,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sgpList.forEach(item => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${item.name}</td>
+        <td title="${escapeAttr(item.name)}">${item.name}</td>
         <td class="td-center">${item.agustusGenuine}</td>
         <td class="td-center">${item.septemberGenuine}</td>
       `;
