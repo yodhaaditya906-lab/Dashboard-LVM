@@ -331,9 +331,71 @@ document.addEventListener('DOMContentLoaded', () => {
     handleFilterChange(e.target.value);
   });
 
+  const unitAutocompleteList = document.getElementById('unit-autocomplete-list');
+
+  function renderUnitAutocompleteSuggestions() {
+    if (!unitSearchInput || !unitAutocompleteList) return;
+
+    const query = unitSearchInput.value.trim().toLowerCase();
+    if (!query || query.length === 0) {
+      unitAutocompleteList.innerHTML = '';
+      unitAutocompleteList.classList.add('hidden');
+      return;
+    }
+
+    const matches = [];
+    const addedKeys = new Set();
+
+    masterUnitList.forEach(item => {
+      if (item.kodeUnit && item.kodeUnit.trim() !== '') {
+        const key = item.kodeUnit.trim();
+        const label = item.namaMka ? `${item.kodeUnit} - ${item.namaMka}` : item.kodeUnit;
+
+        if (label.toLowerCase().includes(query) && !addedKeys.has(key)) {
+          addedKeys.add(key);
+          matches.push({ key, label });
+        }
+      }
+    });
+
+    if (matches.length === 0) {
+      unitAutocompleteList.innerHTML = '<div class="autocomplete-item" style="color: #94a3b8; font-style: italic; cursor: default;">Tidak ada unit ditemukan</div>';
+      unitAutocompleteList.classList.remove('hidden');
+      return;
+    }
+
+    const itemsHtml = matches.map(m => `
+      <div class="autocomplete-item" data-value="${escapeAttr(m.key)}" title="${escapeAttr(m.label)}">
+        ${m.label}
+      </div>
+    `).join('');
+
+    unitAutocompleteList.innerHTML = itemsHtml;
+    unitAutocompleteList.classList.remove('hidden');
+  }
+
+  if (unitAutocompleteList) {
+    unitAutocompleteList.addEventListener('click', (e) => {
+      const itemEl = e.target.closest('.autocomplete-item');
+      if (itemEl && itemEl.dataset.value) {
+        const selectedVal = itemEl.dataset.value;
+        nipSelect.value = selectedVal;
+        handleFilterChange(selectedVal);
+        unitAutocompleteList.classList.add('hidden');
+      }
+    });
+  }
+
   if (unitSearchInput) {
     unitSearchInput.addEventListener('input', () => {
       populateKodeUnitSelectOptions();
+      renderUnitAutocompleteSuggestions();
+    });
+
+    unitSearchInput.addEventListener('focus', () => {
+      if (unitSearchInput.value.trim().length > 0) {
+        renderUnitAutocompleteSuggestions();
+      }
     });
   }
 
@@ -343,6 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
       renderDebiturTable();
     });
   }
+
+  document.addEventListener('click', (e) => {
+    if (unitAutocompleteList && !e.target.closest('.unit-search-wrapper')) {
+      unitAutocompleteList.classList.add('hidden');
+    }
+  });
 
   // Initial Fetch & Start Polling Timer (10s)
   fetchDashboardApi();

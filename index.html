@@ -66,7 +66,10 @@
         </div>
         <div class="mka-dropdown-box">
           <label for="unit-search-input" class="nip-label">Cari & Pilih Kode Unit</label>
-          <input type="text" id="unit-search-input" class="unit-search-input" placeholder="Ketik Nama / Kode Unit...">
+          <div class="unit-search-wrapper">
+            <input type="text" id="unit-search-input" class="unit-search-input" placeholder="Ketik Nama / Kode Unit..." autocomplete="off">
+            <div id="unit-autocomplete-list" class="unit-autocomplete-list custom-scrollbar hidden"></div>
+          </div>
           <div class="select-wrapper">
             <select id="nip-mka-select" class="nip-select">
               <option value="ALL">All</option>
