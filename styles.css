@@ -172,6 +172,9 @@ body.powerbi-theme {
   padding: 4px 10px;
   text-align: center;
   font-size: 13px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .sgp-summary-table th.active-blue-border {
@@ -488,13 +491,19 @@ body.powerbi-theme {
   font-size: 13px;
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.leaderboard-table th.th-rank-name {
+.th-rank-name-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+}
+
+.leaderboard-table th.th-rank-name {
+  text-align: left;
 }
 
 .leaderboard-table th.th-rank-usak {
@@ -549,6 +558,10 @@ body.powerbi-theme {
   font-weight: 800;
   font-size: 13px;
   padding: 6px 10px;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.3);
 }
 
 .leaderboard-table tfoot td.total-cell {
