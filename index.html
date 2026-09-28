@@ -87,9 +87,17 @@
 
     </div>
 
-    <!-- MAIN MIDDLE SECTION: DEBITUR TABLE WITH SEARCH -->
+    <!-- MAIN MIDDLE SECTION: DEBITUR TABLE WITH SEARCH & MONTH SELECTOR -->
     <div class="table-header-bar">
-      <div class="table-title">Detail Debitur Monitoring</div>
+      <div class="table-title-group">
+        <div class="table-title">Detail Debitur Monitoring</div>
+        <div class="month-select-wrapper">
+          <select id="month-select" class="month-select" title="Pilih Bulan Monitoring">
+            <option value="september" selected>Bulan September</option>
+            <option value="agustus">Bulan Agustus</option>
+          </select>
+        </div>
+      </div>
       <div class="table-search-wrapper">
         <input type="text" id="debitur-search-input" class="table-search-input" placeholder="Cari Debitur, SGP, CIF, Rekening, Status...">
       </div>

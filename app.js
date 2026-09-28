@@ -6,19 +6,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_ENDPOINT = '/api/data';
   const AUTO_REFRESH_MS = 10000;
 
-  let masterDebiturData = [];
-  let masterMkaRanks = [];
+  let masterDebiturSeptember = [];
+  let masterDebiturAgustus = [];
+  let masterMkaRanksSeptember = [];
+  let masterMkaRanksAgustus = [];
   let masterUnitList = [];
   let kodeUnitToMkaMap = {};
   let selectedKodeUnit = 'ALL';
+  let selectedMonth = 'september';
   let tableSearchQuery = '';
-  let totalUsakGenuine = 0;
-  let totalUreg = 0;
+
+  let totalUsakGenuineSeptember = 0;
+  let totalUregSeptember = 0;
+  let totalUsakGenuineAgustus = 0;
+  let totalUregAgustus = 0;
 
   // UI Elements
   const syncStatusText = document.getElementById('sync-status-text');
   const pulseDot = document.getElementById('pulse-dot');
   const nipSelect = document.getElementById('nip-mka-select');
+  const monthSelect = document.getElementById('month-select');
   const selectedNameSpan = document.getElementById('selected-mka-name');
   const btnSyncNow = document.getElementById('btn-sync-now');
   const unitSearchInput = document.getElementById('unit-search-input');
@@ -42,16 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
-      if (!data || !data.debiturData || data.debiturData.length === 0) {
-        return;
-      }
+      if (!data) return;
 
-      masterDebiturData = data.debiturData;
-      masterMkaRanks = data.mkaRanks || [];
+      masterDebiturSeptember = data.debiturDataSeptember || data.debiturData || [];
+      masterDebiturAgustus = data.debiturDataAgustus || [];
+      masterMkaRanksSeptember = data.mkaRanksSeptember || data.mkaRanks || [];
+      masterMkaRanksAgustus = data.mkaRanksAgustus || [];
+
       masterUnitList = data.unitList || [];
       kodeUnitToMkaMap = data.kodeUnitToMkaMap || {};
-      totalUsakGenuine = data.totalUsakGenuine || 0;
-      totalUreg = data.totalUreg || 0;
+
+      totalUsakGenuineSeptember = data.totalUsakGenuineSeptember || data.totalUsakGenuine || 0;
+      totalUregSeptember = data.totalUregSeptember || data.totalUreg || 0;
+      totalUsakGenuineAgustus = data.totalUsakGenuineAgustus || 0;
+      totalUregAgustus = data.totalUregAgustus || 0;
 
       populateKodeUnitSelectOptions();
       renderLeaderboard();
@@ -131,7 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalUsak = 0;
     tbody.innerHTML = '';
 
-    masterMkaRanks.forEach((item, index) => {
+    const ranks = (selectedMonth === 'agustus') ? masterMkaRanksAgustus : masterMkaRanksSeptember;
+    const activeRanks = (ranks && ranks.length > 0) ? ranks : masterMkaRanksSeptember;
+
+    activeRanks.forEach((item, index) => {
       totalUsak += item.usakCount;
       const tr = document.createElement('tr');
 
@@ -169,10 +183,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('debitur-tbody');
     if (!tbody) return;
 
-    let filtered = masterDebiturData;
+    let currentDataset = (selectedMonth === 'agustus') ? masterDebiturAgustus : masterDebiturSeptember;
+    if (!currentDataset || currentDataset.length === 0) {
+      currentDataset = masterDebiturSeptember;
+    }
+
+    let filtered = currentDataset;
 
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      filtered = masterDebiturData.filter(d => d.kodeUnit === selectedKodeUnit);
+      filtered = currentDataset.filter(d => d.kodeUnit === selectedKodeUnit);
     }
 
     if (tableSearchQuery && tableSearchQuery.length > 0) {
@@ -231,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
       rowsHtml.push(`
         <tr class="row-dark">
           <td colspan="8" style="text-align: center; padding: 10px; color: #38bdf8; font-style: italic;">
-            Menampilkan ${MAX_DOM_ROWS.toLocaleString('id-ID')} dari ${totalCount.toLocaleString('id-ID')} total debitur hasil pencarian/filter. Gunakan pencarian lebih spesifik atau pilih Kode Unit untuk menyempitkan hasil.
+            Menampilkan ${MAX_DOM_ROWS.toLocaleString('id-ID')} dari ${totalCount.toLocaleString('id-ID')} total debitur (${selectedMonth.toUpperCase()}) hasil pencarian/filter. Gunakan pencarian lebih spesifik atau pilih Kode Unit untuk menyempitkan hasil.
           </td>
         </tr>
       `);
@@ -242,8 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update KPI Displays if present
     const elUsak = document.getElementById('kpi-usak-val');
     const elUreg = document.getElementById('kpi-ureg-val');
-    if (elUsak) elUsak.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? totalUsakGenuine : filterUsakCount;
-    if (elUreg) elUreg.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? totalUreg : filterUregCount;
+    const activeTotalUsak = (selectedMonth === 'agustus') ? totalUsakGenuineAgustus : totalUsakGenuineSeptember;
+    const activeTotalUreg = (selectedMonth === 'agustus') ? totalUregAgustus : totalUregSeptember;
+
+    if (elUsak) elUsak.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? activeTotalUsak : filterUsakCount;
+    if (elUreg) elUreg.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? activeTotalUreg : filterUregCount;
   }
 
   // Render SGP USAK Genuine Summary Matrix Table (Agustus & September)
@@ -252,32 +274,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    let filtered = masterDebiturData;
+    let filteredSep = masterDebiturSeptember;
+    let filteredAgus = masterDebiturAgustus;
 
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      filtered = masterDebiturData.filter(d => d.kodeUnit === selectedKodeUnit);
+      filteredSep = masterDebiturSeptember.filter(d => d.kodeUnit === selectedKodeUnit);
+      filteredAgus = masterDebiturAgustus.filter(d => d.kodeUnit === selectedKodeUnit);
     }
 
-    // Map counts by SGP
     const sgpMap = {};
-    filtered.forEach(d => {
+
+    // September Genuine Count
+    filteredSep.forEach(d => {
       const sgpName = (d.sgp || d.namaMka || 'UNASSIGNED').trim();
       if (!sgpName || sgpName === 'UNASSIGNED') return;
-
       const upperSgp = sgpName.toUpperCase();
       if (!sgpMap[upperSgp]) {
-        sgpMap[upperSgp] = {
-          name: sgpName,
-          septemberGenuine: 0,
-          agustusGenuine: 0
-        };
+        sgpMap[upperSgp] = { name: sgpName, septemberGenuine: 0, agustusGenuine: 0 };
       }
-
       if (d.isGenuine) {
         sgpMap[upperSgp].septemberGenuine += 1;
-        if (d.transaksi > 0) {
-          sgpMap[upperSgp].agustusGenuine += 1;
-        }
+      }
+    });
+
+    // August Genuine Count
+    filteredAgus.forEach(d => {
+      const sgpName = (d.sgp || d.namaMka || 'UNASSIGNED').trim();
+      if (!sgpName || sgpName === 'UNASSIGNED') return;
+      const upperSgp = sgpName.toUpperCase();
+      if (!sgpMap[upperSgp]) {
+        sgpMap[upperSgp] = { name: sgpName, septemberGenuine: 0, agustusGenuine: 0 };
+      }
+      if (d.isGenuine) {
+        sgpMap[upperSgp].agustusGenuine += 1;
       }
     });
 
@@ -340,6 +369,14 @@ document.addEventListener('DOMContentLoaded', () => {
   nipSelect.addEventListener('change', (e) => {
     handleFilterChange(e.target.value);
   });
+
+  if (monthSelect) {
+    monthSelect.addEventListener('change', (e) => {
+      selectedMonth = e.target.value;
+      renderLeaderboard();
+      renderDebiturTable();
+    });
+  }
 
   const unitAutocompleteList = document.getElementById('unit-autocomplete-list');
 

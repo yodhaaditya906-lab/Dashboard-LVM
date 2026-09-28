@@ -5,6 +5,8 @@ const https = require('https');
 
 const CONFIG_FILE = path.join(process.cwd(), 'config.json');
 const LOCAL_CSV_FILE = path.join(process.cwd(), 'data.csv');
+const LOCAL_CSV_SEPTEMBER = path.join(process.cwd(), 'data_september.csv');
+const LOCAL_CSV_AGUSTUS = path.join(process.cwd(), 'data_agustus.csv');
 
 let inMemoryCache = null;
 let lastSyncTime = 0;
@@ -20,19 +22,8 @@ function getConfig() {
     console.error('Error reading config.json:', e);
   }
   return {
-    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1p7YcnAdVNSZjYZ5oyu6hUmMNkyOlfVzSErJGe84lmfc/edit?usp=sharing',
-    sheetName: 'Detail Debitur'
+    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1p7YcnAdVNSZjYZ5oyu6hUmMNkyOlfVzSErJGe84lmfc/edit?usp=sharing'
   };
-}
-
-function getCsvUrl(inputUrl) {
-  if (!inputUrl || inputUrl === 'data.csv') return 'data.csv';
-  const match = inputUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-  if (match && match[1]) {
-    return `https://docs.google.com/spreadsheets/d/${match[1]}/gviz/tq?tqx=out:csv&sheet=Detail%20Debitur`;
-  }
-  if (inputUrl.includes('pub?output=csv')) return inputUrl;
-  return inputUrl;
 }
 
 function parseCsvLine(line) {
@@ -56,6 +47,7 @@ function parseCsvLine(line) {
 }
 
 function parseCsv(csvText) {
+  if (!csvText) return [];
   const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
   if (lines.length === 0) return [];
 
@@ -90,6 +82,7 @@ function isUreg(statusStr) {
 }
 
 function processRawCsv(csvText) {
+  if (!csvText) return null;
   const rawRows = parseCsv(csvText);
   if (!rawRows || rawRows.length === 0) return null;
 
@@ -126,8 +119,6 @@ function processRawCsv(csvText) {
 
     if (!cif && !debitur && !kodeUnitInput && !namaSgpInput) return;
 
-    // HIERARCHICAL FORWARD-FILL BLOCK RULE:
-    // Reset child context (MKA & SGP) whenever a parent block (Kode Unit) changes!
     if (kodeUnitInput && kodeUnitInput.length > 0) {
       currentKodeUnit = kodeUnitInput;
       currentNamaMka = namaMkaInput || '';
@@ -200,7 +191,6 @@ function processRawCsv(csvText) {
   }));
 
   return {
-    lastUpdated: new Date().toISOString(),
     debiturData,
     mkaRanks,
     unitList,
@@ -252,18 +242,112 @@ function fetchHttpsText(targetUrl, timeoutMs = 8000) {
   });
 }
 
+function buildPayload(parsedSeptember, parsedAgustus) {
+  const masterUnitMap = {};
+  const masterUnitList = [];
+  const kodeUnitToMkaMap = {};
+
+  if (parsedSeptember && parsedSeptember.unitList) {
+    parsedSeptember.unitList.forEach(u => {
+      if (!masterUnitMap[u.kodeUnit]) {
+        masterUnitMap[u.kodeUnit] = u;
+        masterUnitList.push(u);
+      }
+      kodeUnitToMkaMap[u.kodeUnit] = u.namaMka;
+    });
+  }
+
+  if (parsedAgustus && parsedAgustus.unitList) {
+    parsedAgustus.unitList.forEach(u => {
+      if (!masterUnitMap[u.kodeUnit]) {
+        masterUnitMap[u.kodeUnit] = u;
+        masterUnitList.push(u);
+      }
+      if (!kodeUnitToMkaMap[u.kodeUnit]) {
+        kodeUnitToMkaMap[u.kodeUnit] = u.namaMka;
+      }
+    });
+  }
+
+  return {
+    lastUpdated: new Date().toISOString(),
+    // September
+    debiturDataSeptember: parsedSeptember ? parsedSeptember.debiturData : [],
+    mkaRanksSeptember: parsedSeptember ? parsedSeptember.mkaRanks : [],
+    totalUsakGenuineSeptember: parsedSeptember ? parsedSeptember.totalUsakGenuine : 0,
+    totalUregSeptember: parsedSeptember ? parsedSeptember.totalUreg : 0,
+
+    // Agustus
+    debiturDataAgustus: parsedAgustus ? parsedAgustus.debiturData : [],
+    mkaRanksAgustus: parsedAgustus ? parsedAgustus.mkaRanks : [],
+    totalUsakGenuineAgustus: parsedAgustus ? parsedAgustus.totalUsakGenuine : 0,
+    totalUregAgustus: parsedAgustus ? parsedAgustus.totalUreg : 0,
+
+    // Fallbacks
+    debiturData: parsedSeptember ? parsedSeptember.debiturData : [],
+    mkaRanks: parsedSeptember ? parsedSeptember.mkaRanks : [],
+    totalUsakGenuine: parsedSeptember ? parsedSeptember.totalUsakGenuine : 0,
+    totalUreg: parsedSeptember ? parsedSeptember.totalUreg : 0,
+
+    unitList: masterUnitList,
+    kodeUnitToMkaMap
+  };
+}
+
+async function fetchDualMonthData() {
+  const docId = '1p7YcnAdVNSZjYZ5oyu6hUmMNkyOlfVzSErJGe84lmfc';
+  const urlSeptember = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Detail Debitur')}`;
+  const urlAgustus = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Detail Debitur Agustus')}`;
+
+  const [csvSeptember, csvAgustus] = await Promise.all([
+    fetchHttpsText(urlSeptember, 10000).catch(err => {
+      console.warn('Error fetching September sheet:', err.message);
+      return fs.existsSync(LOCAL_CSV_SEPTEMBER) ? fs.readFileSync(LOCAL_CSV_SEPTEMBER, 'utf8') : '';
+    }),
+    fetchHttpsText(urlAgustus, 10000).catch(err => {
+      console.warn('Error fetching Agustus sheet:', err.message);
+      return fs.existsSync(LOCAL_CSV_AGUSTUS) ? fs.readFileSync(LOCAL_CSV_AGUSTUS, 'utf8') : '';
+    })
+  ]);
+
+  if (csvSeptember) {
+    fs.writeFile(LOCAL_CSV_SEPTEMBER, csvSeptember, 'utf8', () => {});
+    fs.writeFile(LOCAL_CSV_FILE, csvSeptember, 'utf8', () => {});
+  }
+  if (csvAgustus) {
+    fs.writeFile(LOCAL_CSV_AGUSTUS, csvAgustus, 'utf8', () => {});
+  }
+
+  const parsedSeptember = processRawCsv(csvSeptember);
+  const parsedAgustus = processRawCsv(csvAgustus);
+
+  return buildPayload(parsedSeptember, parsedAgustus);
+}
+
 function loadLocalCache() {
   try {
-    if (fs.existsSync(LOCAL_CSV_FILE)) {
-      const localCsv = fs.readFileSync(LOCAL_CSV_FILE, 'utf8');
-      const parsed = processRawCsv(localCsv);
-      if (parsed && parsed.debiturData && parsed.debiturData.length > 0) {
-        inMemoryCache = parsed;
-        return parsed;
-      }
+    let csvSep = '';
+    let csvAgus = '';
+
+    if (fs.existsSync(LOCAL_CSV_SEPTEMBER)) {
+      csvSep = fs.readFileSync(LOCAL_CSV_SEPTEMBER, 'utf8');
+    } else if (fs.existsSync(LOCAL_CSV_FILE)) {
+      csvSep = fs.readFileSync(LOCAL_CSV_FILE, 'utf8');
+    }
+
+    if (fs.existsSync(LOCAL_CSV_AGUSTUS)) {
+      csvAgus = fs.readFileSync(LOCAL_CSV_AGUSTUS, 'utf8');
+    }
+
+    if (csvSep || csvAgus) {
+      const parsedSep = processRawCsv(csvSep);
+      const parsedAgus = processRawCsv(csvAgus);
+      const payload = buildPayload(parsedSep, parsedAgus);
+      inMemoryCache = payload;
+      return payload;
     }
   } catch (e) {
-    console.error('Error reading local data.csv cache:', e);
+    console.error('Error reading local cache:', e);
   }
   return null;
 }
@@ -274,21 +358,11 @@ function triggerBackgroundSync() {
   if (now - lastSyncTime < CACHE_TTL_MS) return;
 
   isSyncing = true;
-  const config = getConfig();
-  const csvTarget = getCsvUrl(config.googleSheetUrl);
-
-  if (!csvTarget.startsWith('http')) {
-    isSyncing = false;
-    return;
-  }
-
-  fetchHttpsText(csvTarget, 10000)
-    .then(csvText => {
-      const parsed = processRawCsv(csvText);
-      if (parsed && parsed.debiturData && parsed.debiturData.length > 0) {
-        inMemoryCache = parsed;
+  fetchDualMonthData()
+    .then(payload => {
+      if (payload && (payload.debiturDataSeptember.length > 0 || payload.debiturDataAgustus.length > 0)) {
+        inMemoryCache = payload;
         lastSyncTime = Date.now();
-        fs.writeFile(LOCAL_CSV_FILE, csvText, 'utf8', () => {});
       }
     })
     .catch(err => {
@@ -318,7 +392,7 @@ module.exports = async function handler(req, res) {
   }
 
   // 1. If memory cache is available, serve immediately (0ms)
-  if (inMemoryCache && inMemoryCache.debiturData && inMemoryCache.debiturData.length > 0) {
+  if (inMemoryCache && (inMemoryCache.debiturDataSeptember.length > 0 || inMemoryCache.debiturData.length > 0)) {
     triggerBackgroundSync();
     return sendJsonResponse(res, 200, inMemoryCache);
   }
@@ -331,17 +405,12 @@ module.exports = async function handler(req, res) {
   }
 
   // 3. Cold start: fetch remote synchronously with timeout
-  const config = getConfig();
-  const csvTarget = getCsvUrl(config.googleSheetUrl);
-
   try {
-    const csvText = await fetchHttpsText(csvTarget, 8000);
-    const parsed = processRawCsv(csvText);
-    if (parsed) {
-      inMemoryCache = parsed;
+    const payload = await fetchDualMonthData();
+    if (payload) {
+      inMemoryCache = payload;
       lastSyncTime = Date.now();
-      fs.writeFile(LOCAL_CSV_FILE, csvText, 'utf8', () => {});
-      return sendJsonResponse(res, 200, parsed);
+      return sendJsonResponse(res, 200, payload);
     }
   } catch (err) {
     console.error('Cold fetch error:', err.message);

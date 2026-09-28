@@ -445,11 +445,61 @@ body.powerbi-theme {
   padding: 0 4px;
 }
 
+.table-title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .table-title {
   font-size: 14px;
   font-weight: 700;
   color: #38bdf8;
   letter-spacing: 0.3px;
+}
+
+.month-select-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.month-select {
+  background-color: #0b2247;
+  border: 1.5px solid #1d4ed8;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 28px 4px 12px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.month-select:hover, .month-select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+.month-select option {
+  background-color: #020b24;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+
+.month-select-wrapper::after {
+  content: '▼';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #38bdf8;
+  font-size: 9px;
+  pointer-events: none;
 }
 
 .table-search-wrapper {
