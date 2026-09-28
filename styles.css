@@ -243,6 +243,7 @@ body.powerbi-theme {
   min-height: 88px;
   box-shadow: 0 0 10px rgba(0, 85, 212, 0.35);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .mka-info-box {
@@ -253,7 +254,9 @@ body.powerbi-theme {
   justify-content: center;
   gap: 4px;
   border-right: 1px solid #00388a;
-  min-width: 200px;
+  width: 230px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .mka-label {
@@ -271,12 +274,14 @@ body.powerbi-theme {
 
 .mka-dropdown-box {
   background-color: #0000aa;
-  padding: 8px 14px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 6px;
-  min-width: 260px;
+  width: 320px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .nip-label {
@@ -287,6 +292,7 @@ body.powerbi-theme {
 
 .unit-search-input {
   width: 100%;
+  box-sizing: border-box;
   background-color: #000055;
   border: 1px solid #1d4ed8;
   color: #ffffff;
@@ -309,10 +315,12 @@ body.powerbi-theme {
 .select-wrapper {
   position: relative;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .nip-select {
   width: 100%;
+  box-sizing: border-box;
   background-color: #000055;
   border: 1px solid #1d4ed8;
   border-radius: 3px;
@@ -324,6 +332,9 @@ body.powerbi-theme {
   appearance: none;
   -webkit-appearance: none;
   padding: 5px 28px 5px 10px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .nip-select option {
