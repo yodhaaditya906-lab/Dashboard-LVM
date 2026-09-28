@@ -24,6 +24,18 @@
     {
       "src": "data.csv",
       "use": "@vercel/static"
+    },
+    {
+      "src": "data_september.csv",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "data_agustus.csv",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "bg-galaxy.png",
+      "use": "@vercel/static"
     }
   ],
   "routes": [

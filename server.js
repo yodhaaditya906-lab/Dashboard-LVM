@@ -12,7 +12,10 @@ const mimeTypes = {
   '.js': 'text/javascript; charset=UTF-8',
   '.css': 'text/css; charset=UTF-8',
   '.json': 'application/json; charset=UTF-8',
-  '.csv': 'text/csv; charset=UTF-8'
+  '.csv': 'text/csv; charset=UTF-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg'
 };
 
 const server = http.createServer((req, res) => {
