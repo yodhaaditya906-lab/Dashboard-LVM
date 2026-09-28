@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 const CONFIG_FILE = path.join(process.cwd(), 'config.json');
 
@@ -12,7 +13,8 @@ function getConfig() {
     console.error('Error reading config.json:', e);
   }
   return {
-    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/13FmV77rpzxhgmR06W4qYnv2chhhfRpVZEY4KQgkSORg/edit?usp=sharing'
+    googleSheetUrl: 'https://docs.google.com/spreadsheets/d/1p7YcnAdVNSZjYZ5oyu6hUmMNkyOlfVzSErJGe84lmfc/edit?usp=sharing',
+    sheetName: 'Detail Debitur'
   };
 }
 
@@ -20,7 +22,7 @@ function getCsvUrl(inputUrl) {
   if (!inputUrl || inputUrl === 'data.csv') return 'data.csv';
   const match = inputUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
   if (match && match[1]) {
-    return `https://docs.google.com/spreadsheets/d/${match[1]}/gviz/tq?tqx=out:csv`;
+    return `https://docs.google.com/spreadsheets/d/${match[1]}/gviz/tq?tqx=out:csv&sheet=Detail%20Debitur`;
   }
   if (inputUrl.includes('pub?output=csv')) return inputUrl;
   return inputUrl;
@@ -67,16 +69,17 @@ function parseCsv(csvText) {
   return rows;
 }
 
-function isUsakGenuine(usakStr) {
-  if (!usakStr) return false;
-  const upper = usakStr.trim().toUpperCase();
+function isUsakGenuine(statusStr) {
+  if (!statusStr) return false;
+  const upper = statusStr.trim().toUpperCase();
   if (upper.includes('NON')) return false;
-  return upper === 'USAK' || upper.includes('GENUINE');
+  return upper.includes('USAK') || upper.includes('GENUINE');
 }
 
-function isUreg(uregStr) {
-  if (!uregStr) return false;
-  return uregStr.trim().toUpperCase().includes('UREG');
+function isUreg(statusStr) {
+  if (!statusStr) return false;
+  const upper = statusStr.trim().toUpperCase();
+  return upper.includes('UREG') && !upper.includes('NON');
 }
 
 function processRawCsv(csvText) {
@@ -84,17 +87,17 @@ function processRawCsv(csvText) {
   if (!rawRows || rawRows.length === 0) return {};
 
   const debiturData = [];
-  const mkaMap = {};
-  const nipToNameMap = {};
-  const nameToNipsMap = {};
-  const nipList = [];
-  const addedNips = new Set();
+  const unitMap = {};
+  const kodeUnitToMkaMap = {};
+  const unitList = [];
+  const addedUnits = new Set();
 
   let genuineCount = 0;
   let uregCount = 0;
 
+  let currentKodeUnit = '';
   let currentNamaMka = '';
-  let currentNipMka = '';
+  let currentNamaSgp = '';
 
   rawRows.forEach((row) => {
     const getVal = (...keys) => {
@@ -104,94 +107,86 @@ function processRawCsv(csvText) {
       return '';
     };
 
+    const kodeUnitInput = getVal('kode unit', 'unit');
+    const namaMkaInput = getVal('nama mka', 'mka');
+    const namaSgpInput = getVal('nama sgp', 'sgp');
     const cif = getVal('cif', 'kode_cif');
     const debitur = getVal('nama debitur', 'debitur', 'nama');
-    const namaMkaInput = getVal('nama mka', 'mka');
-    const nipMkaInput = getVal('nip mka', 'nip');
+    const rekening = getVal('rekening', 'no_rekening', 'rek');
+    const transaksi = parseInt(getVal('transaksi', 'frekuensi_30days', 'frek_30days', 'frek')) || 0;
+    const salesVolume = parseInt(getVal('sales volume', 'sv_30days', 'sv', 'volume')) || 0;
+    const status = getVal('status', 'ureg_lvm', 'usak_lvm') || 'NON UREG';
 
-    if (!cif && !debitur && !namaMkaInput && !nipMkaInput) return;
+    if (!cif && !debitur && !kodeUnitInput && !namaSgpInput) return;
 
+    if (kodeUnitInput && kodeUnitInput.length > 0) {
+      currentKodeUnit = kodeUnitInput;
+    }
     if (namaMkaInput && namaMkaInput.length > 0) {
       currentNamaMka = namaMkaInput;
     }
-    if (nipMkaInput && nipMkaInput.length > 0) {
-      currentNipMka = nipMkaInput;
+    if (namaSgpInput && namaSgpInput.length > 0) {
+      currentNamaSgp = namaSgpInput;
     }
 
-    if (currentNamaMka && currentNipMka) {
-      const upperName = currentNamaMka.toUpperCase();
-      nipToNameMap[currentNipMka] = currentNamaMka;
-
-      if (!nameToNipsMap[upperName]) {
-        nameToNipsMap[upperName] = [];
-      }
-      if (!nameToNipsMap[upperName].includes(currentNipMka)) {
-        nameToNipsMap[upperName].push(currentNipMka);
-      }
-
-      if (!addedNips.has(currentNipMka)) {
-        addedNips.add(currentNipMka);
-        nipList.push({ nip: currentNipMka, name: currentNamaMka });
+    if (currentKodeUnit) {
+      kodeUnitToMkaMap[currentKodeUnit] = currentNamaMka || currentKodeUnit;
+      if (!addedUnits.has(currentKodeUnit)) {
+        addedUnits.add(currentKodeUnit);
+        unitList.push({
+          kodeUnit: currentKodeUnit,
+          namaMka: currentNamaMka || currentKodeUnit
+        });
       }
     }
 
-    const no = parseInt(getVal('no', 'no.')) || (debiturData.length + 1);
-    const sgp = getVal('nama sgp', 'sgp') || '';
-    const frek = parseInt(getVal('frekuensi 30 hari', 'frek_30days', 'frek')) || 0;
-    const sv = parseInt(getVal('sales volume 30 hari', 'sv_30days', 'sv')) || 0;
-    const gap = parseInt(getVal('gap transaksi', 'gap')) || 0;
-    const ureg = getVal('ureg lvm', 'ureg') || 'UREG';
-    const usak = getVal('usak lvm', 'usak') || 'NON USAK';
-
-    const isGenuine = isUsakGenuine(usak);
+    const isGenuine = isUsakGenuine(status);
     if (isGenuine) genuineCount++;
-    if (isUreg(ureg)) uregCount++;
+    if (isUreg(status)) uregCount++;
 
     let rowStyle = 'row-dark';
     if (debiturData.length % 3 === 1) rowStyle = 'row-dark-blue';
     if (debiturData.length % 3 === 2) rowStyle = 'row-bright-blue';
 
     debiturData.push({
-      no,
-      nipMka: currentNipMka,
+      no: debiturData.length + 1,
+      kodeUnit: currentKodeUnit,
       namaMka: currentNamaMka,
+      sgp: currentNamaSgp || 'UNASSIGNED',
       cif,
       debitur,
-      sgp,
-      frek,
-      sv,
-      gap,
-      ureg,
-      usak,
+      rekening: rekening || '-',
+      transaksi,
+      salesVolume,
+      status,
       isGenuine,
       rowStyle
     });
 
-    const mkaKey = currentNamaMka || sgp || 'UNASSIGNED';
-    if (mkaKey !== 'UNASSIGNED') {
-      const upperKey = mkaKey.toUpperCase();
-      if (!mkaMap[upperKey]) {
-        mkaMap[upperKey] = {
-          name: mkaKey,
-          nips: nameToNipsMap[upperKey] || (currentNipMka ? [currentNipMka] : []),
+    // Kode Unit Aggregation
+    const unitKey = currentKodeUnit || 'UNASSIGNED';
+    if (unitKey !== 'UNASSIGNED') {
+      if (!unitMap[unitKey]) {
+        unitMap[unitKey] = {
+          kodeUnit: unitKey,
+          name: currentNamaMka ? `${unitKey} - ${currentNamaMka}` : unitKey,
+          namaMka: currentNamaMka,
           usakCount: 0
         };
       }
-      if (currentNipMka && !mkaMap[upperKey].nips.includes(currentNipMka)) {
-        mkaMap[upperKey].nips.push(currentNipMka);
-      }
       if (isGenuine) {
-        mkaMap[upperKey].usakCount += 1;
+        unitMap[unitKey].usakCount += 1;
       }
     }
   });
 
-  const mkaList = Object.values(mkaMap);
-  mkaList.sort((a, b) => b.usakCount - a.usakCount);
-  const mkaRanks = mkaList.map((item, idx) => ({
+  const unitRankList = Object.values(unitMap);
+  unitRankList.sort((a, b) => b.usakCount - a.usakCount);
+  const mkaRanks = unitRankList.map((item, idx) => ({
     rank: idx + 1,
-    nips: item.nips,
+    kodeUnit: item.kodeUnit,
     name: item.name,
+    namaMka: item.namaMka,
     usakCount: item.usakCount
   }));
 
@@ -199,15 +194,12 @@ function processRawCsv(csvText) {
     lastUpdated: new Date().toISOString(),
     debiturData,
     mkaRanks,
-    nipList,
-    nipToNameMap,
-    nameToNipsMap,
+    unitList,
+    kodeUnitToMkaMap,
     totalUsakGenuine: genuineCount,
     totalUreg: uregCount
   };
 }
-
-const https = require('https');
 
 function fetchHttpsText(targetUrl) {
   return new Promise((resolve, reject) => {

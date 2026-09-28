@@ -58,14 +58,14 @@
       <!-- Spacer -->
       <div class="top-row-spacer"></div>
 
-      <!-- MKA Selector Panel (Top Right) -->
+      <!-- Kode Unit Selector Panel (Top Right) -->
       <div class="mka-filter-panel">
         <div class="mka-info-box">
-          <div class="mka-label">Nama MKA Terpilih</div>
-          <div class="mka-selected-name" id="selected-mka-name">Silakan Masukkan NIP</div>
+          <div class="mka-label">Kode Unit Terpilih</div>
+          <div class="mka-selected-name" id="selected-mka-name">Silakan Pilih Kode Unit</div>
         </div>
         <div class="mka-dropdown-box">
-          <label for="nip-mka-select" class="nip-label">Nip MKA</label>
+          <label for="nip-mka-select" class="nip-label">Kode Unit</label>
           <div class="select-wrapper">
             <select id="nip-mka-select" class="nip-select">
               <option value="ALL">All</option>
@@ -81,15 +81,14 @@
       <table class="debitur-table" id="debitur-table">
         <thead>
           <tr>
-            <th class="th-no">No.</th>
-            <th class="th-cif">cif</th>
-            <th class="th-debitur">nama_debitur</th>
-            <th class="th-sgp">nama_sgp</th>
-            <th class="th-frek">frek_30days</th>
-            <th class="th-sv">sv_30days</th>
-            <th class="th-gap">Gap Transaksi</th>
-            <th class="th-ureg">ureg_lvm</th>
-            <th class="th-usak">usak_lvm</th>
+            <th class="th-no">No</th>
+            <th class="th-sgp">Nama SGP</th>
+            <th class="th-cif">CIF</th>
+            <th class="th-debitur">Nama Debitur</th>
+            <th class="th-rekening">Rekening</th>
+            <th class="th-transaksi">Transaksi</th>
+            <th class="th-sv">Sales Volume</th>
+            <th class="th-status">Status</th>
           </tr>
         </thead>
         <tbody id="debitur-tbody">
@@ -109,7 +108,7 @@
               <tr>
                 <th class="th-rank-no">No</th>
                 <th class="th-rank-name">
-                  <span>Rank Nama MKA</span>
+                  <span>Rank Kode Unit / MKA</span>
                   <span class="sort-icon">▼</span>
                 </th>
                 <th class="th-rank-usak">Jumlah USAK</th>

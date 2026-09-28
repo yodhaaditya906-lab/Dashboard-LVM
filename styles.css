@@ -336,9 +336,8 @@ body.powerbi-theme {
   white-space: nowrap;
 }
 
-.debitur-table th.th-frek,
-.debitur-table th.th-sv,
-.debitur-table th.th-gap {
+.debitur-table th.th-transaksi,
+.debitur-table th.th-sv {
   text-align: right;
 }
 

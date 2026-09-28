@@ -8,10 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let masterDebiturData = [];
   let masterMkaRanks = [];
-  let masterNipList = [];
-  let nipToNameMap = {};
-  let nameToNipsMap = {};
-  let selectedNipOrName = 'ALL';
+  let masterUnitList = [];
+  let kodeUnitToMkaMap = {};
+  let selectedKodeUnit = 'ALL';
   let totalUsakGenuine = 0;
   let totalUreg = 0;
 
@@ -23,11 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSyncNow = document.getElementById('btn-sync-now');
 
   // Check if string is genuine USAK (Excludes 'NON USAK')
-  function isUsakGenuine(usakStr) {
-    if (!usakStr) return false;
-    const upper = usakStr.trim().toUpperCase();
+  function isUsakGenuine(statusStr) {
+    if (!statusStr) return false;
+    const upper = statusStr.trim().toUpperCase();
     if (upper.includes('NON')) return false;
-    return upper === 'USAK' || upper.includes('GENUINE');
+    return upper.includes('USAK') || upper.includes('GENUINE');
   }
 
   // Fetch API Endpoint from Node.js Server
@@ -42,13 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       masterDebiturData = data.debiturData || [];
       masterMkaRanks = data.mkaRanks || [];
-      masterNipList = data.nipList || [];
-      nipToNameMap = data.nipToNameMap || {};
-      nameToNipsMap = data.nameToNipsMap || {};
+      masterUnitList = data.unitList || [];
+      kodeUnitToMkaMap = data.kodeUnitToMkaMap || {};
       totalUsakGenuine = data.totalUsakGenuine || 0;
       totalUreg = data.totalUreg || 0;
 
-      populateNipSelectOptions();
+      populateKodeUnitSelectOptions();
       renderLeaderboard();
       renderDebiturTable();
       renderSgpSummaryTable();
@@ -63,18 +61,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Populate Dropdown Options ONLY by NIP & Nama MKA Pairs (Strictly Excludes Plain Names)
-  function populateNipSelectOptions() {
+  // Populate Dropdown Options by Kode Unit & Nama MKA Pairs
+  function populateKodeUnitSelectOptions() {
     const prevVal = nipSelect.value || 'ALL';
     nipSelect.innerHTML = '<option value="ALL">All</option>';
 
     const addedKeys = new Set();
 
-    // Populate strictly pairs of [NIP] - [Nama MKA]
-    masterNipList.forEach(item => {
-      if (item.nip && item.nip.trim() !== '') {
-        const key = item.nip.trim();
-        const label = `${item.nip} - ${item.name}`;
+    masterUnitList.forEach(item => {
+      if (item.kodeUnit && item.kodeUnit.trim() !== '') {
+        const key = item.kodeUnit.trim();
+        const label = item.namaMka ? `${item.kodeUnit} - ${item.namaMka}` : item.kodeUnit;
 
         if (!addedKeys.has(key)) {
           addedKeys.add(key);
@@ -88,39 +85,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (addedKeys.has(prevVal)) {
       nipSelect.value = prevVal;
-      selectedNipOrName = prevVal;
+      selectedKodeUnit = prevVal;
     } else {
       nipSelect.value = 'ALL';
-      selectedNipOrName = 'ALL';
+      selectedKodeUnit = 'ALL';
     }
   }
 
-  // Get MKA Name from selected NIP or Name key
-  function resolveMkaName(keyVal) {
+  // Resolve Kode Unit Name for Header Display
+  function resolveKodeUnitName(keyVal) {
     if (!keyVal || keyVal === 'ALL') return '';
-    if (nipToNameMap[keyVal]) return nipToNameMap[keyVal];
+    if (kodeUnitToMkaMap[keyVal]) {
+      return `${keyVal} - ${kodeUnitToMkaMap[keyVal]}`;
+    }
 
-    const foundByNip = masterNipList.find(n => n.nip === keyVal);
-    if (foundByNip) return foundByNip.name;
+    const found = masterUnitList.find(u => u.kodeUnit === keyVal);
+    if (found) return `${found.kodeUnit} - ${found.namaMka}`;
 
     return keyVal; // Fallback
   }
 
-  // Render Leaderboard (Yellow Card)
+  // Render Leaderboard (Yellow Card - Rank by Kode Unit)
   function renderLeaderboard() {
     const tbody = document.getElementById('leaderboard-tbody');
+    if (!tbody) return;
     let totalUsak = 0;
     tbody.innerHTML = '';
-
-    const activeMkaName = resolveMkaName(selectedNipOrName);
 
     masterMkaRanks.forEach((item, index) => {
       totalUsak += item.usakCount;
       const tr = document.createElement('tr');
 
-      const isSelected = selectedNipOrName !== 'ALL' && 
-        (activeMkaName.toUpperCase() === item.name.toUpperCase() || 
-         (item.nips && item.nips.includes(selectedNipOrName)));
+      const isSelected = selectedKodeUnit !== 'ALL' && selectedKodeUnit === item.kodeUnit;
 
       if (isSelected) {
         tr.className = 'rank-row-blue';
@@ -137,70 +133,68 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       tr.addEventListener('click', () => {
-        // Pick primary NIP if available for this MKA
-        const primaryNip = (item.nips && item.nips.length > 0) ? item.nips[0] : item.name;
-        nipSelect.value = primaryNip;
-        handleFilterChange(primaryNip);
+        const selectedKey = item.kodeUnit || item.name;
+        nipSelect.value = selectedKey;
+        handleFilterChange(selectedKey);
       });
 
       tbody.appendChild(tr);
     });
 
-    document.getElementById('leaderboard-total-val').textContent = totalUsak;
+    const totalEl = document.getElementById('leaderboard-total-val');
+    if (totalEl) totalEl.textContent = totalUsak;
   }
 
-  // Render Debitur Table
+  // Render Debitur Table (8 Columns: No, Nama SGP, CIF, Nama Debitur, Rekening, Transaksi, Sales Volume, Status)
   function renderDebiturTable() {
     const tbody = document.getElementById('debitur-tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     let filtered = masterDebiturData;
-    const activeMkaName = resolveMkaName(selectedNipOrName);
 
-    if (selectedNipOrName && selectedNipOrName !== 'ALL') {
-      const upperActive = activeMkaName.toUpperCase();
-      const nipsForMka = nameToNipsMap[upperActive] || [selectedNipOrName];
-
+    if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
+      const activeMkaName = resolveKodeUnitName(selectedKodeUnit).toUpperCase();
       filtered = masterDebiturData.filter(d => {
-        const matchByNip = d.nipMka === selectedNipOrName || nipsForMka.includes(d.nipMka);
-        const matchByName = d.namaMka && d.namaMka.toUpperCase() === upperActive;
-        const matchBySgp = d.sgp && d.sgp.toUpperCase() === upperActive;
+        const matchByUnit = d.kodeUnit === selectedKodeUnit;
+        const matchByName = d.namaMka && activeMkaName.includes(d.namaMka.toUpperCase());
 
-        return matchByNip || matchByName || matchBySgp;
+        return matchByUnit || matchByName;
       });
     }
 
     let filterUsakCount = 0;
     let filterUregCount = 0;
 
-    filtered.forEach(d => {
-      const isGenuine = isUsakGenuine(d.usak);
+    filtered.forEach((d, idx) => {
+      const isGenuine = isUsakGenuine(d.status);
       if (isGenuine) filterUsakCount++;
-      if (d.ureg && d.ureg.toUpperCase().includes('UREG')) filterUregCount++;
+      if (d.status && d.status.toUpperCase().includes('UREG') && !d.status.toUpperCase().includes('NON')) {
+        filterUregCount++;
+      }
 
       const tr = document.createElement('tr');
       tr.className = d.rowStyle || 'row-dark';
 
       tr.innerHTML = `
-        <td>${d.no}</td>
-        <td>${d.cif}</td>
-        <td>${d.debitur}</td>
-        <td>${d.sgp}</td>
-        <td class="td-right">${d.frek.toLocaleString('id-ID')}</td>
-        <td class="td-right">${d.sv.toLocaleString('id-ID')}</td>
-        <td class="td-right">${d.gap.toLocaleString('id-ID')}</td>
-        <td class="cell-cyan-text">${d.ureg}</td>
-        <td class="cell-cyan-text">${d.usak}</td>
+        <td>${idx + 1}</td>
+        <td>${d.sgp || '-'}</td>
+        <td>${d.cif || '-'}</td>
+        <td>${d.debitur || '-'}</td>
+        <td>${d.rekening || '-'}</td>
+        <td class="td-right">${(d.transaksi || 0).toLocaleString('id-ID')}</td>
+        <td class="td-right">${(d.salesVolume || 0).toLocaleString('id-ID')}</td>
+        <td class="cell-cyan-text">${d.status || '-'}</td>
       `;
 
       tbody.appendChild(tr);
     });
 
-    // Update KPI Card Metric Displays (if present)
+    // Update KPI Displays if present
     const elUsak = document.getElementById('kpi-usak-val');
     const elUreg = document.getElementById('kpi-ureg-val');
-    if (elUsak) elUsak.textContent = selectedNipOrName === 'ALL' ? totalUsakGenuine : filterUsakCount;
-    if (elUreg) elUreg.textContent = selectedNipOrName === 'ALL' ? totalUreg : filterUregCount;
+    if (elUsak) elUsak.textContent = selectedKodeUnit === 'ALL' ? totalUsakGenuine : filterUsakCount;
+    if (elUreg) elUreg.textContent = selectedKodeUnit === 'ALL' ? totalUreg : filterUregCount;
   }
 
   // Render SGP USAK Genuine Summary Matrix Table (Agustus & September)
@@ -210,18 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
     tbody.innerHTML = '';
 
     let filtered = masterDebiturData;
-    const activeMkaName = resolveMkaName(selectedNipOrName);
 
-    if (selectedNipOrName && selectedNipOrName !== 'ALL') {
-      const upperActive = activeMkaName.toUpperCase();
-      const nipsForMka = nameToNipsMap[upperActive] || [selectedNipOrName];
-
+    if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
+      const activeMkaName = resolveKodeUnitName(selectedKodeUnit).toUpperCase();
       filtered = masterDebiturData.filter(d => {
-        const matchByNip = d.nipMka === selectedNipOrName || nipsForMka.includes(d.nipMka);
-        const matchByName = d.namaMka && d.namaMka.toUpperCase() === upperActive;
-        const matchBySgp = d.sgp && d.sgp.toUpperCase() === upperActive;
-
-        return matchByNip || matchByName || matchBySgp;
+        const matchByUnit = d.kodeUnit === selectedKodeUnit;
+        const matchByName = d.namaMka && activeMkaName.includes(d.namaMka.toUpperCase());
+        return matchByUnit || matchByName;
       });
     }
 
@@ -242,8 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (d.isGenuine) {
         sgpMap[upperSgp].septemberGenuine += 1;
-        // Derive/Calculate August USAK Genuine baseline for month-over-month comparison
-        if (d.frek > 0 || (d.gap !== undefined && d.gap < 15)) {
+        if (d.transaksi > 0) {
           sgpMap[upperSgp].agustusGenuine += 1;
         }
       }
@@ -277,12 +265,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Filter Event Listener
   function handleFilterChange(keyVal) {
-    selectedNipOrName = keyVal;
+    selectedKodeUnit = keyVal;
 
     if (!keyVal || keyVal === 'ALL') {
-      selectedNameSpan.textContent = 'Silakan Masukkan NIP';
+      selectedNameSpan.textContent = 'Silakan Pilih Kode Unit';
     } else {
-      const resolvedName = resolveMkaName(keyVal);
+      const resolvedName = resolveKodeUnitName(keyVal);
       selectedNameSpan.textContent = resolvedName;
     }
 
