@@ -918,7 +918,7 @@ body.powerbi-theme {
 }
 
 .excel-filter-popup {
-  position: absolute;
+  position: fixed;
   z-index: 9999;
   width: 250px;
   background-color: #020817;

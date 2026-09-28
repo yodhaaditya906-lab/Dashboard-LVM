@@ -616,24 +616,20 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Position popup directly under the target TH header cell with zero empty space gap
+    // Position popup directly under the target TH header cell with zero empty space gap (position: fixed)
     const thCell = anchorBtn.closest('th') || anchorBtn;
     const thRect = thCell.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-
-    // Use popup width matching column width (min 220px, max 260px)
     const POPUP_WIDTH = Math.max(220, Math.min(260, thRect.width + 40));
 
     filterPopupEl.style.width = `${POPUP_WIDTH}px`;
-    filterPopupEl.style.top = `${thRect.bottom + scrollTop + 2}px`;
+    filterPopupEl.style.top = `${thRect.bottom + 2}px`;
 
-    // Left align directly with the left edge of the column header TH cell
-    let popupLeft = thRect.left + scrollLeft;
+    // Left align directly with the left edge of the column header TH cell (fixed viewport coordinates)
+    let popupLeft = thRect.left;
 
     // If popup would overflow viewport right edge, align right edge of popup to TH cell right edge
     if (popupLeft + POPUP_WIDTH > window.innerWidth - 10) {
-      popupLeft = (thRect.right + scrollLeft) - POPUP_WIDTH;
+      popupLeft = thRect.right - POPUP_WIDTH;
     }
 
     if (popupLeft < 10) popupLeft = 10;
@@ -780,6 +776,12 @@ document.addEventListener('DOMContentLoaded', () => {
       closeColumnFilterPopup();
     }
   });
+
+  const debiturTableContainer = document.querySelector('.debitur-table-container');
+  if (debiturTableContainer) {
+    debiturTableContainer.addEventListener('scroll', closeColumnFilterPopup, { passive: true });
+  }
+  window.addEventListener('scroll', closeColumnFilterPopup, { passive: true });
 
   // Initial Fetch & Start Polling Timer (10s)
   fetchDashboardApi();
