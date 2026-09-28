@@ -21,6 +21,42 @@ document.addEventListener('DOMContentLoaded', () => {
   let totalUsakGenuineAgustus = 0;
   let totalUregAgustus = 0;
 
+  // Excel Column-Specific Filter & Sort State
+  const columnFilters = {
+    sgp: null,
+    cif: null,
+    debitur: null,
+    rekening: null,
+    transaksi: null,
+    salesVolume: null,
+    status: null
+  };
+
+  const columnSort = {
+    colKey: null,
+    direction: null
+  };
+
+  let activePopupColKey = null;
+  const filterPopupEl = document.getElementById('column-filter-popup');
+
+  function getRowColValue(d, colKey) {
+    if (colKey === 'sgp') return d.sgp || '-';
+    if (colKey === 'cif') return d.cif || '-';
+    if (colKey === 'debitur') return d.debitur || '-';
+    if (colKey === 'rekening') return d.rekening || '-';
+    if (colKey === 'transaksi') return (d.transaksi || 0).toLocaleString('id-ID');
+    if (colKey === 'salesVolume') return (d.salesVolume || 0).toLocaleString('id-ID');
+    if (colKey === 'status') return d.status || '-';
+    return '';
+  }
+
+  function getRowColNumericValue(d, colKey) {
+    if (colKey === 'transaksi') return d.transaksi || 0;
+    if (colKey === 'salesVolume') return d.salesVolume || 0;
+    return 0;
+  }
+
   // UI Elements
   const syncStatusText = document.getElementById('sync-status-text');
   const pulseDot = document.getElementById('pulse-dot');
@@ -190,10 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let filtered = currentDataset;
 
+    // 1. Filter by Selected Kode Unit
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      filtered = currentDataset.filter(d => d.kodeUnit === selectedKodeUnit);
+      filtered = filtered.filter(d => d.kodeUnit === selectedKodeUnit);
     }
 
+    // 2. Filter by Main Search Bar
     if (tableSearchQuery && tableSearchQuery.length > 0) {
       filtered = filtered.filter(d => {
         return (d.debitur && d.debitur.toLowerCase().includes(tableSearchQuery)) ||
@@ -204,6 +242,49 @@ document.addEventListener('DOMContentLoaded', () => {
                (d.status && d.status.toLowerCase().includes(tableSearchQuery));
       });
     }
+
+    // 3. Filter by Column-Specific Checkboxes (Excel Filter)
+    Object.keys(columnFilters).forEach(colKey => {
+      const allowedSet = columnFilters[colKey];
+      if (allowedSet instanceof Set) {
+        filtered = filtered.filter(d => {
+          const val = getRowColValue(d, colKey);
+          return allowedSet.has(val);
+        });
+      }
+    });
+
+    // 4. Sort by Column (Excel Sort)
+    if (columnSort.colKey && columnSort.direction) {
+      const { colKey, direction } = columnSort;
+      const isAsc = direction === 'asc';
+
+      filtered = [...filtered].sort((a, b) => {
+        if (colKey === 'transaksi' || colKey === 'salesVolume') {
+          const valA = getRowColNumericValue(a, colKey);
+          const valB = getRowColNumericValue(b, colKey);
+          return isAsc ? valA - valB : valB - valA;
+        } else {
+          const strA = getRowColValue(a, colKey);
+          const strB = getRowColValue(b, colKey);
+          return isAsc ? strA.localeCompare(strB) : strB.localeCompare(strA);
+        }
+      });
+    }
+
+    // Update Filter Active Indicators on Table Header Buttons
+    document.querySelectorAll('.col-filter-btn').forEach(btn => {
+      const colKey = btn.dataset.col;
+      const isFiltered = columnFilters[colKey] instanceof Set;
+      const isSorted = columnSort.colKey === colKey;
+      if (isFiltered || isSorted) {
+        btn.classList.add('active');
+        btn.textContent = isSorted ? (columnSort.direction === 'asc' ? '▲' : '▼') : '▼';
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = '▼';
+      }
+    });
 
     let filterUsakCount = 0;
     let filterUregCount = 0;
@@ -264,8 +345,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeTotalUsak = (selectedMonth === 'agustus') ? totalUsakGenuineAgustus : totalUsakGenuineSeptember;
     const activeTotalUreg = (selectedMonth === 'agustus') ? totalUregAgustus : totalUregSeptember;
 
-    if (elUsak) elUsak.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? activeTotalUsak : filterUsakCount;
-    if (elUreg) elUreg.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? activeTotalUreg : filterUregCount;
+    const hasAnyActiveFilter = (selectedKodeUnit !== 'ALL' || tableSearchQuery || columnSort.colKey || Object.values(columnFilters).some(v => v !== null));
+
+    if (elUsak) elUsak.textContent = !hasAnyActiveFilter ? activeTotalUsak : filterUsakCount;
+    if (elUreg) elUreg.textContent = !hasAnyActiveFilter ? activeTotalUreg : filterUregCount;
   }
 
   // Render SGP USAK Genuine Summary Matrix Table (Agustus & September)
@@ -456,9 +539,208 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==========================================================================
+  // EXCEL COLUMN FILTER POPUP ENGINE
+  // ==========================================================================
+  function openColumnFilterPopup(colKey, anchorBtn) {
+    if (!filterPopupEl) return;
+
+    activePopupColKey = colKey;
+
+    let baseDataset = (selectedMonth === 'agustus') ? masterDebiturAgustus : masterDebiturSeptember;
+    if (!baseDataset || baseDataset.length === 0) baseDataset = masterDebiturSeptember;
+
+    if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
+      baseDataset = baseDataset.filter(d => d.kodeUnit === selectedKodeUnit);
+    }
+
+    if (tableSearchQuery) {
+      baseDataset = baseDataset.filter(d => {
+        return (d.debitur && d.debitur.toLowerCase().includes(tableSearchQuery)) ||
+               (d.sgp && d.sgp.toLowerCase().includes(tableSearchQuery)) ||
+               (d.cif && d.cif.toLowerCase().includes(tableSearchQuery)) ||
+               (d.rekening && d.rekening.toLowerCase().includes(tableSearchQuery)) ||
+               (d.kodeUnit && d.kodeUnit.toLowerCase().includes(tableSearchQuery)) ||
+               (d.status && d.status.toLowerCase().includes(tableSearchQuery));
+      });
+    }
+
+    // Filter by other active column filters (except current colKey)
+    Object.keys(columnFilters).forEach(otherKey => {
+      if (otherKey !== colKey && columnFilters[otherKey] instanceof Set) {
+        const allowedSet = columnFilters[otherKey];
+        baseDataset = baseDataset.filter(d => allowedSet.has(getRowColValue(d, otherKey)));
+      }
+    });
+
+    // Count distinct values
+    const valueCounts = {};
+    baseDataset.forEach(d => {
+      const val = getRowColValue(d, colKey);
+      valueCounts[val] = (valueCounts[val] || 0) + 1;
+    });
+
+    const distinctValues = Object.keys(valueCounts).sort((a, b) => {
+      if (colKey === 'transaksi' || colKey === 'salesVolume') {
+        const numA = parseInt(a.replace(/\./g, '')) || 0;
+        const numB = parseInt(b.replace(/\./g, '')) || 0;
+        return numB - numA;
+      }
+      return a.localeCompare(b);
+    });
+
+    const isNumeric = (colKey === 'transaksi' || colKey === 'salesVolume');
+    const sortAscLabel = isNumeric ? '🔼 Urutkan Terkecil ke Terbesar' : '🔼 Urutkan A ke Z';
+    const sortDescLabel = isNumeric ? '🔽 Urutkan Terbesar ke Terkecil' : '🔽 Urutkan Z ke A';
+
+    const currentSort = (columnSort.colKey === colKey) ? columnSort.direction : null;
+    const currentFilterSet = columnFilters[colKey];
+
+    filterPopupEl.innerHTML = `
+      <div class="excel-filter-sort-section">
+        <button class="excel-filter-sort-btn ${currentSort === 'asc' ? 'active' : ''}" data-sort="asc">
+          ${sortAscLabel}
+        </button>
+        <button class="excel-filter-sort-btn ${currentSort === 'desc' ? 'active' : ''}" data-sort="desc">
+          ${sortDescLabel}
+        </button>
+      </div>
+      <div class="excel-filter-divider"></div>
+      <input type="text" class="excel-filter-search-box" id="popup-search-box" placeholder="Cari nilai...">
+      <div class="excel-filter-list" id="popup-checkbox-list">
+        <label class="excel-filter-item">
+          <input type="checkbox" id="popup-select-all" ${!currentFilterSet ? 'checked' : ''}>
+          <span class="excel-filter-item-text" style="font-weight: 700; color: #ffffff;">(Pilih Semua)</span>
+        </label>
+        ${distinctValues.map(val => {
+          const isChecked = !currentFilterSet || currentFilterSet.has(val);
+          return `
+            <label class="excel-filter-item" data-val="${escapeAttr(val)}">
+              <input type="checkbox" class="popup-item-cb" data-val="${escapeAttr(val)}" ${isChecked ? 'checked' : ''}>
+              <span class="excel-filter-item-text" title="${escapeAttr(val)}">${escapeAttr(val)}</span>
+              <span class="excel-filter-item-count">(${valueCounts[val]})</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+      <div class="excel-filter-footer">
+        <button class="excel-filter-action-btn excel-filter-btn-clear" id="popup-btn-clear">Hapus Filter</button>
+        <button class="excel-filter-action-btn excel-filter-btn-apply" id="popup-btn-apply">Terapkan</button>
+      </div>
+    `;
+
+    // Position popup anchored to button
+    const btnRect = anchorBtn.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+    filterPopupEl.style.top = `${btnRect.bottom + scrollTop + 4}px`;
+
+    let popupLeft = btnRect.left + scrollLeft - 180;
+    if (popupLeft < 10) popupLeft = 10;
+    if (popupLeft + 260 > window.innerWidth) popupLeft = window.innerWidth - 270;
+    filterPopupEl.style.left = `${popupLeft}px`;
+
+    filterPopupEl.classList.remove('hidden');
+
+    // Event Listeners inside Popup
+    const selectAllCb = document.getElementById('popup-select-all');
+    const itemCbs = filterPopupEl.querySelectorAll('.popup-item-cb');
+    const searchBox = document.getElementById('popup-search-box');
+
+    selectAllCb.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      itemCbs.forEach(cb => {
+        if (cb.closest('.excel-filter-item').style.display !== 'none') {
+          cb.checked = checked;
+        }
+      });
+    });
+
+    searchBox.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      filterPopupEl.querySelectorAll('.excel-filter-item[data-val]').forEach(item => {
+        const text = (item.dataset.val || '').toLowerCase();
+        if (!q || text.includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+
+    filterPopupEl.querySelectorAll('.excel-filter-sort-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dir = btn.dataset.sort;
+        if (columnSort.colKey === colKey && columnSort.direction === dir) {
+          columnSort.colKey = null;
+          columnSort.direction = null;
+        } else {
+          columnSort.colKey = colKey;
+          columnSort.direction = dir;
+        }
+        renderDebiturTable();
+        closeColumnFilterPopup();
+      });
+    });
+
+    document.getElementById('popup-btn-clear').addEventListener('click', () => {
+      columnFilters[colKey] = null;
+      if (columnSort.colKey === colKey) {
+        columnSort.colKey = null;
+        columnSort.direction = null;
+      }
+      renderDebiturTable();
+      closeColumnFilterPopup();
+    });
+
+    document.getElementById('popup-btn-apply').addEventListener('click', () => {
+      const selectedSet = new Set();
+      let totalVisible = 0;
+      itemCbs.forEach(cb => {
+        totalVisible++;
+        if (cb.checked) {
+          selectedSet.add(cb.dataset.val);
+        }
+      });
+
+      if (selectedSet.size === totalVisible || selectedSet.size === distinctValues.length) {
+        columnFilters[colKey] = null;
+      } else {
+        columnFilters[colKey] = selectedSet;
+      }
+
+      renderDebiturTable();
+      closeColumnFilterPopup();
+    });
+  }
+
+  function closeColumnFilterPopup() {
+    if (filterPopupEl) {
+      filterPopupEl.classList.add('hidden');
+      activePopupColKey = null;
+    }
+  }
+
   document.addEventListener('click', (e) => {
     if (unitAutocompleteList && !e.target.closest('.unit-search-wrapper')) {
       unitAutocompleteList.classList.add('hidden');
+    }
+
+    const btn = e.target.closest('.col-filter-btn');
+    if (btn) {
+      e.stopPropagation();
+      const colKey = btn.dataset.col;
+      if (activePopupColKey === colKey && filterPopupEl && !filterPopupEl.classList.contains('hidden')) {
+        closeColumnFilterPopup();
+      } else {
+        openColumnFilterPopup(colKey, btn);
+      }
+      return;
+    }
+
+    if (filterPopupEl && !e.target.closest('#column-filter-popup')) {
+      closeColumnFilterPopup();
     }
   });
 

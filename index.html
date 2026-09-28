@@ -106,14 +106,49 @@
       <table class="debitur-table" id="debitur-table">
         <thead>
           <tr>
-            <th class="th-no">No</th>
-            <th class="th-sgp">Nama SGP</th>
-            <th class="th-cif">CIF</th>
-            <th class="th-debitur">Nama Debitur</th>
-            <th class="th-rekening">Rekening</th>
-            <th class="th-transaksi">Transaksi</th>
-            <th class="th-sv">Sales Volume</th>
-            <th class="th-status">Status</th>
+            <th class="th-no" data-col="no">No</th>
+            <th class="th-sgp" data-col="sgp">
+              <div class="th-content">
+                <span>Nama SGP</span>
+                <button class="col-filter-btn" title="Filter & Sort Nama SGP" data-col="sgp">▼</button>
+              </div>
+            </th>
+            <th class="th-cif" data-col="cif">
+              <div class="th-content">
+                <span>CIF</span>
+                <button class="col-filter-btn" title="Filter & Sort CIF" data-col="cif">▼</button>
+              </div>
+            </th>
+            <th class="th-debitur" data-col="debitur">
+              <div class="th-content">
+                <span>Nama Debitur</span>
+                <button class="col-filter-btn" title="Filter & Sort Nama Debitur" data-col="debitur">▼</button>
+              </div>
+            </th>
+            <th class="th-rekening" data-col="rekening">
+              <div class="th-content">
+                <span>Rekening</span>
+                <button class="col-filter-btn" title="Filter & Sort Rekening" data-col="rekening">▼</button>
+              </div>
+            </th>
+            <th class="th-transaksi" data-col="transaksi">
+              <div class="th-content">
+                <span>Transaksi</span>
+                <button class="col-filter-btn" title="Filter & Sort Transaksi" data-col="transaksi">▼</button>
+              </div>
+            </th>
+            <th class="th-sv" data-col="salesVolume">
+              <div class="th-content">
+                <span>Sales Volume</span>
+                <button class="col-filter-btn" title="Filter & Sort Sales Volume" data-col="salesVolume">▼</button>
+              </div>
+            </th>
+            <th class="th-status" data-col="status">
+              <div class="th-content">
+                <span>Status</span>
+                <button class="col-filter-btn" title="Filter & Sort Status" data-col="status">▼</button>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody id="debitur-tbody">
@@ -121,6 +156,9 @@
         </tbody>
       </table>
     </div>
+
+    <!-- EXCEL COLUMN FILTER POPUP OVERLAY -->
+    <div id="column-filter-popup" class="excel-filter-popup hidden"></div>
 
     <!-- BOTTOM SECTION: YELLOW LEADERBOARD CARD -->
     <div class="bottom-section">

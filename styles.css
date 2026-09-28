@@ -870,3 +870,217 @@ body.powerbi-theme {
 .btn-save:hover {
   background-color: #0369a1;
 }
+
+/* ==========================================================================
+   EXCEL-STYLE COLUMN FILTERS & POPUP OVERLAY
+   ========================================================================== */
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.debitur-table th.th-transaksi .th-content,
+.debitur-table th.th-sv .th-content {
+  justify-content: flex-end;
+}
+
+.col-filter-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  color: #ffffff;
+  font-size: 9px;
+  padding: 1px 4px;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.col-filter-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.col-filter-btn.active {
+  background-color: #00f2fe;
+  color: #020617;
+  border-color: #00f2fe;
+  font-weight: 900;
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.8);
+}
+
+.excel-filter-popup {
+  position: absolute;
+  z-index: 9999;
+  width: 250px;
+  background-color: #020817;
+  border: 1.5px solid #38bdf8;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95);
+  padding: 8px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.excel-filter-popup.hidden {
+  display: none !important;
+}
+
+.excel-filter-sort-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.excel-filter-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  color: #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.excel-filter-sort-btn:hover {
+  background-color: #1e293b;
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.excel-filter-sort-btn.active {
+  background-color: #0369a1;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.excel-filter-divider {
+  height: 1px;
+  background-color: #1e293b;
+  margin: 6px 0;
+}
+
+.excel-filter-search-box {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #0b1329;
+  border: 1px solid #334155;
+  color: #ffffff;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  margin-bottom: 6px;
+  outline: none;
+}
+
+.excel-filter-search-box:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.5);
+}
+
+.excel-filter-search-box::placeholder {
+  color: #64748b;
+}
+
+.excel-filter-list {
+  max-height: 160px;
+  overflow-y: auto;
+  background-color: #060d23;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.excel-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11.5px;
+  color: #cbd5e1;
+}
+
+.excel-filter-item:hover {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+.excel-filter-item input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #00f2fe;
+}
+
+.excel-filter-item-text {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.excel-filter-item-count {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.excel-filter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.excel-filter-action-btn {
+  flex: 1;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.excel-filter-btn-clear {
+  background-color: #334155;
+  color: #f1f5f9;
+}
+
+.excel-filter-btn-clear:hover {
+  background-color: #475569;
+}
+
+.excel-filter-btn-apply {
+  background: linear-gradient(135deg, #0284c7 0%, #00f2fe 100%);
+  color: #0f172a;
+}
+
+.excel-filter-btn-apply:hover {
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+  transform: translateY(-1px);
+}
+
