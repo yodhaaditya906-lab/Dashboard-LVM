@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let masterUnitList = [];
   let kodeUnitToMkaMap = {};
   let selectedKodeUnit = 'ALL';
+  let tableSearchQuery = '';
   let totalUsakGenuine = 0;
   let totalUreg = 0;
 
@@ -20,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const nipSelect = document.getElementById('nip-mka-select');
   const selectedNameSpan = document.getElementById('selected-mka-name');
   const btnSyncNow = document.getElementById('btn-sync-now');
+  const unitSearchInput = document.getElementById('unit-search-input');
+  const debiturSearchInput = document.getElementById('debitur-search-input');
 
   // Check if string is genuine USAK (Excludes 'NON USAK')
   function isUsakGenuine(statusStr) {
@@ -67,7 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Populate Dropdown Options by Kode Unit & Nama MKA Pairs
   function populateKodeUnitSelectOptions() {
-    const prevVal = nipSelect.value || 'ALL';
+    const prevVal = nipSelect.value || selectedKodeUnit || 'ALL';
+    const filterQuery = unitSearchInput ? unitSearchInput.value.trim().toLowerCase() : '';
     nipSelect.innerHTML = '<option value="ALL">All</option>';
 
     const addedKeys = new Set();
@@ -76,6 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (item.kodeUnit && item.kodeUnit.trim() !== '') {
         const key = item.kodeUnit.trim();
         const label = item.namaMka ? `${item.kodeUnit} - ${item.namaMka}` : item.kodeUnit;
+
+        if (filterQuery && !label.toLowerCase().includes(filterQuery)) {
+          return;
+        }
 
         if (!addedKeys.has(key)) {
           addedKeys.add(key);
@@ -89,10 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (addedKeys.has(prevVal)) {
       nipSelect.value = prevVal;
-      selectedKodeUnit = prevVal;
-    } else {
+    } else if (prevVal === 'ALL') {
       nipSelect.value = 'ALL';
-      selectedKodeUnit = 'ALL';
     }
   }
 
@@ -160,6 +166,17 @@ document.addEventListener('DOMContentLoaded', () => {
       filtered = masterDebiturData.filter(d => d.kodeUnit === selectedKodeUnit);
     }
 
+    if (tableSearchQuery && tableSearchQuery.length > 0) {
+      filtered = filtered.filter(d => {
+        return (d.debitur && d.debitur.toLowerCase().includes(tableSearchQuery)) ||
+               (d.sgp && d.sgp.toLowerCase().includes(tableSearchQuery)) ||
+               (d.cif && d.cif.toLowerCase().includes(tableSearchQuery)) ||
+               (d.rekening && d.rekening.toLowerCase().includes(tableSearchQuery)) ||
+               (d.kodeUnit && d.kodeUnit.toLowerCase().includes(tableSearchQuery)) ||
+               (d.status && d.status.toLowerCase().includes(tableSearchQuery));
+      });
+    }
+
     let filterUsakCount = 0;
     let filterUregCount = 0;
 
@@ -172,9 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Limit DOM rendering to top 500 rows when viewing ALL (prevents Chrome DOM buffer crashes)
+    // Limit DOM rendering to top 500 rows when viewing ALL or broad search (prevents Chrome DOM buffer crashes)
     const MAX_DOM_ROWS = 500;
-    const renderLimit = (selectedKodeUnit === 'ALL') ? Math.min(totalCount, MAX_DOM_ROWS) : totalCount;
+    const isCapped = totalCount > MAX_DOM_ROWS;
+    const renderLimit = isCapped ? MAX_DOM_ROWS : totalCount;
 
     const rowsHtml = [];
     for (let idx = 0; idx < renderLimit; idx++) {
@@ -194,11 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
       `);
     }
 
-    if (selectedKodeUnit === 'ALL' && totalCount > MAX_DOM_ROWS) {
+    if (isCapped) {
       rowsHtml.push(`
         <tr class="row-dark">
           <td colspan="8" style="text-align: center; padding: 10px; color: #38bdf8; font-style: italic;">
-            Menampilkan ${MAX_DOM_ROWS.toLocaleString('id-ID')} dari ${totalCount.toLocaleString('id-ID')} total debitur. Silakan gunakan filter Kode Unit di kanan atas untuk melihat debitur spesifik.
+            Menampilkan ${MAX_DOM_ROWS.toLocaleString('id-ID')} dari ${totalCount.toLocaleString('id-ID')} total debitur hasil pencarian/filter. Gunakan pencarian lebih spesifik atau pilih Kode Unit untuk menyempitkan hasil.
           </td>
         </tr>
       `);
@@ -209,8 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update KPI Displays if present
     const elUsak = document.getElementById('kpi-usak-val');
     const elUreg = document.getElementById('kpi-ureg-val');
-    if (elUsak) elUsak.textContent = selectedKodeUnit === 'ALL' ? totalUsakGenuine : filterUsakCount;
-    if (elUreg) elUreg.textContent = selectedKodeUnit === 'ALL' ? totalUreg : filterUregCount;
+    if (elUsak) elUsak.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? totalUsakGenuine : filterUsakCount;
+    if (elUreg) elUreg.textContent = (selectedKodeUnit === 'ALL' && !tableSearchQuery) ? totalUreg : filterUregCount;
   }
 
   // Render SGP USAK Genuine Summary Matrix Table (Agustus & September)
@@ -297,6 +315,19 @@ document.addEventListener('DOMContentLoaded', () => {
   nipSelect.addEventListener('change', (e) => {
     handleFilterChange(e.target.value);
   });
+
+  if (unitSearchInput) {
+    unitSearchInput.addEventListener('input', () => {
+      populateKodeUnitSelectOptions();
+    });
+  }
+
+  if (debiturSearchInput) {
+    debiturSearchInput.addEventListener('input', (e) => {
+      tableSearchQuery = e.target.value.trim().toLowerCase();
+      renderDebiturTable();
+    });
+  }
 
   // Initial Fetch & Start Polling Timer (10s)
   fetchDashboardApi();
