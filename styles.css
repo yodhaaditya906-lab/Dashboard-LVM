@@ -172,9 +172,18 @@ body.powerbi-theme {
   padding: 4px 10px;
   text-align: center;
   font-size: 13px;
+}
+
+.sgp-summary-table thead tr:first-child th {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 12;
+}
+
+.sgp-summary-table thead tr:nth-child(2) th {
+  position: sticky;
+  top: 24px;
+  z-index: 11;
 }
 
 .sgp-summary-table th.active-blue-border {
@@ -182,6 +191,9 @@ body.powerbi-theme {
   vertical-align: middle;
   min-width: 170px;
   text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 13;
 }
 
 .sgp-summary-table th.th-usak-genuine {
