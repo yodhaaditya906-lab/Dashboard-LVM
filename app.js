@@ -39,7 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
-      masterDebiturData = data.debiturData || [];
+      if (!data || !data.debiturData || data.debiturData.length === 0) {
+        return;
+      }
+
+      masterDebiturData = data.debiturData;
       masterMkaRanks = data.mkaRanks || [];
       masterUnitList = data.unitList || [];
       kodeUnitToMkaMap = data.kodeUnitToMkaMap || {};
@@ -57,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Error fetching dashboard API:', err);
       pulseDot.className = 'status-pulse error';
-      syncStatusText.textContent = `Sync Offline: Gagal terhubung ke server. Retrying...`;
+      syncStatusText.textContent = `Sync Offline: Menampilkan data lokal (${new Date().toLocaleTimeString('id-ID')})`;
     }
   }
 
@@ -149,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderDebiturTable() {
     const tbody = document.getElementById('debitur-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '';
 
     let filtered = masterDebiturData;
 
@@ -166,29 +169,32 @@ document.addEventListener('DOMContentLoaded', () => {
     let filterUsakCount = 0;
     let filterUregCount = 0;
 
-    filtered.forEach((d, idx) => {
-      const isGenuine = isUsakGenuine(d.status);
+    const rowsHtml = [];
+    const totalCount = filtered.length;
+
+    for (let idx = 0; idx < totalCount; idx++) {
+      const d = filtered[idx];
+      const isGenuine = d.isGenuine;
       if (isGenuine) filterUsakCount++;
       if (d.status && d.status.toUpperCase().includes('UREG') && !d.status.toUpperCase().includes('NON')) {
         filterUregCount++;
       }
 
-      const tr = document.createElement('tr');
-      tr.className = d.rowStyle || 'row-dark';
+      rowsHtml.push(`
+        <tr class="${d.rowStyle || 'row-dark'}">
+          <td>${idx + 1}</td>
+          <td>${d.sgp || '-'}</td>
+          <td>${d.cif || '-'}</td>
+          <td>${d.debitur || '-'}</td>
+          <td>${d.rekening || '-'}</td>
+          <td class="td-right">${(d.transaksi || 0).toLocaleString('id-ID')}</td>
+          <td class="td-right">${(d.salesVolume || 0).toLocaleString('id-ID')}</td>
+          <td class="cell-cyan-text">${d.status || '-'}</td>
+        </tr>
+      `);
+    }
 
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${d.sgp || '-'}</td>
-        <td>${d.cif || '-'}</td>
-        <td>${d.debitur || '-'}</td>
-        <td>${d.rekening || '-'}</td>
-        <td class="td-right">${(d.transaksi || 0).toLocaleString('id-ID')}</td>
-        <td class="td-right">${(d.salesVolume || 0).toLocaleString('id-ID')}</td>
-        <td class="cell-cyan-text">${d.status || '-'}</td>
-      `;
-
-      tbody.appendChild(tr);
-    });
+    tbody.innerHTML = rowsHtml.join('');
 
     // Update KPI Displays if present
     const elUsak = document.getElementById('kpi-usak-val');
