@@ -289,22 +289,32 @@ document.addEventListener('DOMContentLoaded', () => {
       return a.name.localeCompare(b.name);
     });
 
+    let sumAgustus = 0;
+    let sumSeptember = 0;
+
     if (sgpList.length === 0) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td colspan="3" class="td-center" style="color: #666; font-style: italic;">Tidak ada SGP dengan USAK Genuine</td>`;
       tbody.appendChild(tr);
-      return;
+    } else {
+      sgpList.forEach(item => {
+        sumAgustus += item.agustusGenuine;
+        sumSeptember += item.septemberGenuine;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td title="${escapeAttr(item.name)}">${item.name}</td>
+          <td class="td-center">${item.agustusGenuine}</td>
+          <td class="td-center">${item.septemberGenuine}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    sgpList.forEach(item => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td title="${escapeAttr(item.name)}">${item.name}</td>
-        <td class="td-center">${item.agustusGenuine}</td>
-        <td class="td-center">${item.septemberGenuine}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+    const elAgustusTotal = document.getElementById('sgp-total-agustus');
+    const elSeptemberTotal = document.getElementById('sgp-total-september');
+    if (elAgustusTotal) elAgustusTotal.textContent = sumAgustus;
+    if (elSeptemberTotal) elSeptemberTotal.textContent = sumSeptember;
   }
 
   // Filter Event Listener

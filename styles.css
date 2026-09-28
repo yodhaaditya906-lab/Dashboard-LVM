@@ -228,6 +228,29 @@ body.powerbi-theme {
   font-weight: 600;
 }
 
+.sgp-summary-table tfoot td {
+  background-color: #ffffff;
+  color: #000000;
+  font-weight: 800;
+  border: 1.5px solid #000000;
+  padding: 4px 8px;
+  font-size: 13px;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.15);
+}
+
+.sgp-summary-table tfoot td.td-total-label {
+  text-align: left;
+  font-weight: 800;
+}
+
+.sgp-summary-table tfoot td.td-total-val {
+  text-align: center;
+  font-weight: 800;
+}
+
 .sgp-summary-table tr:nth-child(even) td {
   background-color: #b8b8b8;
 }
