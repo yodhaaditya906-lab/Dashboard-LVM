@@ -201,12 +201,20 @@ function processRawCsv(csvText) {
   };
 }
 
+const http = require('http');
+
 function fetchHttpsText(targetUrl) {
   return new Promise((resolve, reject) => {
-    const request = (url) => {
-      https.get(url, (res) => {
+    const request = (urlStr) => {
+      const lib = urlStr.startsWith('https') ? https : http;
+      lib.get(urlStr, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          return request(res.headers.location);
+          let redirectUrl = res.headers.location;
+          if (redirectUrl.startsWith('/')) {
+            const parsed = new URL(urlStr);
+            redirectUrl = `${parsed.protocol}//${parsed.host}${redirectUrl}`;
+          }
+          return request(redirectUrl);
         }
         if (res.statusCode !== 200) {
           return reject(new Error(`HTTP ${res.statusCode}`));
