@@ -207,6 +207,27 @@ function processRawCsv(csvText) {
   };
 }
 
+const https = require('https');
+
+function fetchHttpsText(targetUrl) {
+  return new Promise((resolve, reject) => {
+    const request = (url) => {
+      https.get(url, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return request(res.headers.location);
+        }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`HTTP ${res.statusCode}`));
+        }
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => resolve(body));
+      }).on('error', reject);
+    };
+    request(targetUrl);
+  });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -222,13 +243,11 @@ module.exports = async function handler(req, res) {
       return res.status(200).json(parsed);
     }
 
-    const response = await fetch(csvTarget);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const csvText = await response.text();
+    const csvText = await fetchHttpsText(csvTarget);
     const parsed = processRawCsv(csvText);
     return res.status(200).json(parsed);
   } catch (err) {
-    console.error('Error fetching CSV:', err);
+    console.error('Error fetching CSV from remote:', err.message);
     try {
       const localPath = path.join(process.cwd(), 'data.csv');
       const localCsv = fs.readFileSync(localPath, 'utf8');

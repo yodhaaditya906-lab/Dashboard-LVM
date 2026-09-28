@@ -2,7 +2,6 @@
   "name": "dashboard-merchant",
   "version": "1.0.0",
   "description": "Bank Mandiri Merchant Dashboard",
-  "main": "server.js",
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js"
