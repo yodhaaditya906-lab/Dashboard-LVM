@@ -616,21 +616,29 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Position popup directly under/adjacent to the filter triangle button
-    const btnRect = anchorBtn.getBoundingClientRect();
+    // Position popup directly under the target TH header cell with zero empty space gap
+    const thCell = anchorBtn.closest('th') || anchorBtn;
+    const thRect = thCell.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-    const POPUP_WIDTH = 250;
 
-    let popupLeft = (btnRect.right + scrollLeft) - POPUP_WIDTH;
-    if (popupLeft < 10) popupLeft = btnRect.left + scrollLeft;
-    if (popupLeft < 10) popupLeft = 10;
+    // Use popup width matching column width (min 220px, max 260px)
+    const POPUP_WIDTH = Math.max(220, Math.min(260, thRect.width + 40));
+
+    filterPopupEl.style.width = `${POPUP_WIDTH}px`;
+    filterPopupEl.style.top = `${thRect.bottom + scrollTop + 2}px`;
+
+    // Left align directly with the left edge of the column header TH cell
+    let popupLeft = thRect.left + scrollLeft;
+
+    // If popup would overflow viewport right edge, align right edge of popup to TH cell right edge
     if (popupLeft + POPUP_WIDTH > window.innerWidth - 10) {
-      popupLeft = window.innerWidth - POPUP_WIDTH - 10;
+      popupLeft = (thRect.right + scrollLeft) - POPUP_WIDTH;
     }
 
-    filterPopupEl.style.top = `${btnRect.bottom + scrollTop + 4}px`;
+    if (popupLeft < 10) popupLeft = 10;
     filterPopupEl.style.left = `${popupLeft}px`;
+
     filterPopupEl.classList.remove('hidden');
 
     // Helper to render checkbox items (max 150 for 0ms instant speed)
