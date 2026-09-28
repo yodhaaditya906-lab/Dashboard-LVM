@@ -312,9 +312,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sgpList = Object.values(sgpMap);
     sgpList.sort((a, b) => {
-      const totalA = a.septemberGenuine + a.agustusGenuine;
-      const totalB = b.septemberGenuine + b.agustusGenuine;
-      if (totalB !== totalA) return totalB - totalA;
+      if (b.septemberGenuine !== a.septemberGenuine) {
+        return b.septemberGenuine - a.septemberGenuine;
+      }
+      if (b.agustusGenuine !== a.agustusGenuine) {
+        return b.agustusGenuine - a.agustusGenuine;
+      }
       return a.name.localeCompare(b.name);
     });
 
