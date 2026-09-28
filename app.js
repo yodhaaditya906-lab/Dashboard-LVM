@@ -351,7 +351,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elUreg) elUreg.textContent = !hasAnyActiveFilter ? activeTotalUreg : filterUregCount;
   }
 
-  // Render SGP USAK Genuine Summary Matrix Table (Agustus & September)
+  // Helper to test if status is UREG (All statuses EXCEPT 'NON UREG' / 'NON...' and EXCEPT 'USAK Genuine')
+  function isUregStatus(statusStr) {
+    if (!statusStr) return false;
+    const upper = statusStr.trim().toUpperCase();
+    if (upper.includes('NON')) return false;
+    if (isUsakGenuine(statusStr)) return false;
+    return true;
+  }
+
+  // Render SGP USAK Genuine & UREG Summary Matrix Table (Agustus & September)
   function renderSgpSummaryTable() {
     const tbody = document.getElementById('sgp-summary-tbody');
     if (!tbody) return;
@@ -367,29 +376,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sgpMap = {};
 
-    // September Genuine Count
+    // September Data
     filteredSep.forEach(d => {
       const sgpName = (d.sgp || d.namaMka || 'UNASSIGNED').trim();
       if (!sgpName || sgpName === 'UNASSIGNED') return;
       const upperSgp = sgpName.toUpperCase();
       if (!sgpMap[upperSgp]) {
-        sgpMap[upperSgp] = { name: sgpName, septemberGenuine: 0, agustusGenuine: 0 };
+        sgpMap[upperSgp] = { name: sgpName, septemberGenuine: 0, agustusGenuine: 0, septemberUreg: 0, agustusUreg: 0 };
       }
       if (d.isGenuine) {
         sgpMap[upperSgp].septemberGenuine += 1;
       }
+      if (isUregStatus(d.status)) {
+        sgpMap[upperSgp].septemberUreg += 1;
+      }
     });
 
-    // August Genuine Count
+    // August Data
     filteredAgus.forEach(d => {
       const sgpName = (d.sgp || d.namaMka || 'UNASSIGNED').trim();
       if (!sgpName || sgpName === 'UNASSIGNED') return;
       const upperSgp = sgpName.toUpperCase();
       if (!sgpMap[upperSgp]) {
-        sgpMap[upperSgp] = { name: sgpName, septemberGenuine: 0, agustusGenuine: 0 };
+        sgpMap[upperSgp] = { name: sgpName, septemberGenuine: 0, agustusGenuine: 0, septemberUreg: 0, agustusUreg: 0 };
       }
       if (d.isGenuine) {
         sgpMap[upperSgp].agustusGenuine += 1;
+      }
+      if (isUregStatus(d.status)) {
+        sgpMap[upperSgp].agustusUreg += 1;
       }
     });
 
@@ -401,26 +416,35 @@ document.addEventListener('DOMContentLoaded', () => {
       if (b.agustusGenuine !== a.agustusGenuine) {
         return b.agustusGenuine - a.agustusGenuine;
       }
+      if (b.septemberUreg !== a.septemberUreg) {
+        return b.septemberUreg - a.septemberUreg;
+      }
       return a.name.localeCompare(b.name);
     });
 
-    let sumAgustus = 0;
-    let sumSeptember = 0;
+    let sumAgustusGenuine = 0;
+    let sumSeptemberGenuine = 0;
+    let sumAgustusUreg = 0;
+    let sumSeptemberUreg = 0;
 
     if (sgpList.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="3" class="td-center" style="color: #666; font-style: italic;">Tidak ada SGP dengan USAK Genuine</td>`;
+      tr.innerHTML = `<td colspan="5" class="td-center" style="color: #666; font-style: italic;">Tidak ada SGP dengan USAK Genuine / UREG</td>`;
       tbody.appendChild(tr);
     } else {
       sgpList.forEach(item => {
-        sumAgustus += item.agustusGenuine;
-        sumSeptember += item.septemberGenuine;
+        sumAgustusGenuine += item.agustusGenuine;
+        sumSeptemberGenuine += item.septemberGenuine;
+        sumAgustusUreg += item.agustusUreg;
+        sumSeptemberUreg += item.septemberUreg;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td title="${escapeAttr(item.name)}">${item.name}</td>
           <td class="td-center">${item.agustusGenuine}</td>
           <td class="td-center">${item.septemberGenuine}</td>
+          <td class="td-center">${item.agustusUreg}</td>
+          <td class="td-center">${item.septemberUreg}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -428,8 +452,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const elAgustusTotal = document.getElementById('sgp-total-agustus');
     const elSeptemberTotal = document.getElementById('sgp-total-september');
-    if (elAgustusTotal) elAgustusTotal.textContent = sumAgustus;
-    if (elSeptemberTotal) elSeptemberTotal.textContent = sumSeptember;
+    const elUregAgustusTotal = document.getElementById('sgp-total-ureg-agustus');
+    const elUregSeptemberTotal = document.getElementById('sgp-total-ureg-september');
+
+    if (elAgustusTotal) elAgustusTotal.textContent = sumAgustusGenuine;
+    if (elSeptemberTotal) elSeptemberTotal.textContent = sumSeptemberGenuine;
+    if (elUregAgustusTotal) elUregAgustusTotal.textContent = sumAgustusUreg;
+    if (elUregSeptemberTotal) elUregSeptemberTotal.textContent = sumSeptemberUreg;
   }
 
   // Filter Event Listener

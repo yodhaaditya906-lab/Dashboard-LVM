@@ -143,7 +143,7 @@ body.powerbi-theme {
   background-color: #020712;
   border: 1px solid #142854;
   border-radius: 2px;
-  width: 440px;
+  width: 600px;
   flex-shrink: 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
   overflow: hidden;
@@ -191,23 +191,24 @@ body.powerbi-theme {
 .sgp-summary-table th.active-blue-border {
   border: 2.5px solid #0078d4 !important; /* Distinct blue focus outline as in Image 2 */
   vertical-align: middle;
-  width: 55%;
+  width: 36%;
   text-align: center;
   position: sticky;
   top: 0;
   z-index: 13;
 }
 
-.sgp-summary-table th.th-usak-genuine {
-  font-size: 13.5px;
+.sgp-summary-table th.th-usak-genuine,
+.sgp-summary-table th.th-ureg {
+  font-size: 13px;
   font-weight: 600;
-  width: 45%;
+  width: 32%;
 }
 
 .sgp-summary-table th.th-month {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
-  width: 22.5%;
+  width: 16%;
 }
 
 .sgp-summary-table td {
