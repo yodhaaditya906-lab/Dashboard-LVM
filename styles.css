@@ -587,9 +587,9 @@ body.powerbi-theme {
   box-sizing: border-box;
 }
 
-.leaderboard-table th.th-rank-no { width: 45px; }
-.leaderboard-table th.th-rank-name { width: 285px; text-align: left; }
-.leaderboard-table th.th-rank-usak { width: 110px; text-align: right; }
+.leaderboard-table th.th-rank-no { width: 40px; }
+.leaderboard-table th.th-rank-name { width: 260px; text-align: left; }
+.leaderboard-table th.th-rank-usak { width: 140px; text-align: right; padding-right: 22px; }
 
 .th-rank-name-inner {
   display: flex;
@@ -641,6 +641,7 @@ body.powerbi-theme {
 .leaderboard-table td.rank-usak-val {
   text-align: right;
   font-weight: 700;
+  padding-right: 22px;
 }
 
 /* Leaderboard Footer Row */
@@ -658,6 +659,7 @@ body.powerbi-theme {
 
 .leaderboard-table tfoot td.total-cell {
   text-align: right;
+  padding-right: 22px;
 }
 
 /* Custom Dark Scrollbars */
