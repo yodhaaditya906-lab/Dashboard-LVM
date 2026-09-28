@@ -1,8 +1,15 @@
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const https = require('https');
 
 const CONFIG_FILE = path.join(process.cwd(), 'config.json');
+const LOCAL_CSV_FILE = path.join(process.cwd(), 'data.csv');
+
+let inMemoryCache = null;
+let lastSyncTime = 0;
+let isSyncing = false;
+const CACHE_TTL_MS = 30000; // 30 seconds TTL
 
 function getConfig() {
   try {
@@ -84,7 +91,7 @@ function isUreg(statusStr) {
 
 function processRawCsv(csvText) {
   const rawRows = parseCsv(csvText);
-  if (!rawRows || rawRows.length === 0) return {};
+  if (!rawRows || rawRows.length === 0) return null;
 
   const debiturData = [];
   const unitMap = {};
@@ -163,7 +170,6 @@ function processRawCsv(csvText) {
       rowStyle
     });
 
-    // Kode Unit Aggregation
     const unitKey = currentKodeUnit || 'UNASSIGNED';
     if (unitKey !== 'UNASSIGNED') {
       if (!unitMap[unitKey]) {
@@ -201,10 +207,9 @@ function processRawCsv(csvText) {
   };
 }
 
-const http = require('http');
-
-function fetchHttpsText(targetUrl) {
+function fetchHttpsText(targetUrl, timeoutMs = 8000) {
   return new Promise((resolve, reject) => {
+    let timer;
     const request = (urlStr) => {
       let parsed;
       try {
@@ -213,7 +218,7 @@ function fetchHttpsText(targetUrl) {
         return reject(e);
       }
       const lib = parsed.protocol === 'https:' ? https : http;
-      lib.get(urlStr, (res) => {
+      const req = lib.get(urlStr, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           let redirectUrl = res.headers.location;
           if (redirectUrl.startsWith('/')) {
@@ -226,11 +231,69 @@ function fetchHttpsText(targetUrl) {
         }
         let body = '';
         res.on('data', chunk => body += chunk);
-        res.on('end', () => resolve(body));
-      }).on('error', reject);
+        res.on('end', () => {
+          if (timer) clearTimeout(timer);
+          resolve(body);
+        });
+      });
+      req.on('error', (err) => {
+        if (timer) clearTimeout(timer);
+        reject(err);
+      });
+      timer = setTimeout(() => {
+        req.destroy();
+        reject(new Error('Fetch timeout'));
+      }, timeoutMs);
     };
     request(targetUrl);
   });
+}
+
+function loadLocalCache() {
+  try {
+    if (fs.existsSync(LOCAL_CSV_FILE)) {
+      const localCsv = fs.readFileSync(LOCAL_CSV_FILE, 'utf8');
+      const parsed = processRawCsv(localCsv);
+      if (parsed && parsed.debiturData && parsed.debiturData.length > 0) {
+        inMemoryCache = parsed;
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Error reading local data.csv cache:', e);
+  }
+  return null;
+}
+
+function triggerBackgroundSync() {
+  if (isSyncing) return;
+  const now = Date.now();
+  if (now - lastSyncTime < CACHE_TTL_MS) return;
+
+  isSyncing = true;
+  const config = getConfig();
+  const csvTarget = getCsvUrl(config.googleSheetUrl);
+
+  if (!csvTarget.startsWith('http')) {
+    isSyncing = false;
+    return;
+  }
+
+  fetchHttpsText(csvTarget, 10000)
+    .then(csvText => {
+      const parsed = processRawCsv(csvText);
+      if (parsed && parsed.debiturData && parsed.debiturData.length > 0) {
+        inMemoryCache = parsed;
+        lastSyncTime = Date.now();
+        fs.writeFile(LOCAL_CSV_FILE, csvText, 'utf8', () => {});
+      }
+    })
+    .catch(err => {
+      console.warn('Background sync warning (using cached data):', err.message);
+    })
+    .finally(() => {
+      isSyncing = false;
+    });
 }
 
 function sendJsonResponse(res, statusCode, data) {
@@ -240,7 +303,7 @@ function sendJsonResponse(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=UTF-8',
     'Access-Control-Allow-Origin': '*',
-    'Cache-Control': 'no-cache, no-store, must-revalidate'
+    'Cache-Control': 'public, max-age=15, stale-while-revalidate=30'
   });
   res.end(JSON.stringify(data));
 }
@@ -248,33 +311,39 @@ function sendJsonResponse(res, statusCode, data) {
 module.exports = async function handler(req, res) {
   if (typeof res.setHeader === 'function') {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=30');
   }
 
+  // 1. If memory cache is available, serve immediately (0ms)
+  if (inMemoryCache && inMemoryCache.debiturData && inMemoryCache.debiturData.length > 0) {
+    triggerBackgroundSync();
+    return sendJsonResponse(res, 200, inMemoryCache);
+  }
+
+  // 2. Otherwise load local file cache (3ms)
+  const localData = loadLocalCache();
+  if (localData) {
+    triggerBackgroundSync();
+    return sendJsonResponse(res, 200, localData);
+  }
+
+  // 3. Cold start: fetch remote synchronously with timeout
   const config = getConfig();
   const csvTarget = getCsvUrl(config.googleSheetUrl);
 
   try {
-    if (!csvTarget.startsWith('http')) {
-      const localPath = path.join(process.cwd(), 'data.csv');
-      const localCsv = fs.readFileSync(localPath, 'utf8');
-      const parsed = processRawCsv(localCsv);
-      return sendJsonResponse(res, 200, parsed);
-    }
-
-    const csvText = await fetchHttpsText(csvTarget);
+    const csvText = await fetchHttpsText(csvTarget, 8000);
     const parsed = processRawCsv(csvText);
-    return sendJsonResponse(res, 200, parsed);
-  } catch (err) {
-    console.error('Error fetching CSV from remote:', err.message);
-    try {
-      const localPath = path.join(process.cwd(), 'data.csv');
-      const localCsv = fs.readFileSync(localPath, 'utf8');
-      const parsed = processRawCsv(localCsv);
+    if (parsed) {
+      inMemoryCache = parsed;
+      lastSyncTime = Date.now();
+      fs.writeFile(LOCAL_CSV_FILE, csvText, 'utf8', () => {});
       return sendJsonResponse(res, 200, parsed);
-    } catch (e) {
-      return sendJsonResponse(res, 500, { error: 'Failed to parse data' });
     }
+  } catch (err) {
+    console.error('Cold fetch error:', err.message);
   }
+
+  return sendJsonResponse(res, 500, { error: 'Failed to load data' });
 };
 module.exports.processRawCsv = processRawCsv;
