@@ -11,6 +11,11 @@
 
 body.powerbi-theme {
   background-color: #040914;
+  background-image: linear-gradient(180deg, rgba(4, 9, 20, 0.45) 0%, rgba(2, 6, 18, 0.65) 100%), url('bg-galaxy.png');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: #ffffff;
   min-height: 100vh;
   display: flex;
@@ -111,21 +116,17 @@ body.powerbi-theme {
   width: 100%;
   max-width: 1360px;
   min-height: 700px;
-  background-color: #060c1e;
-  /* City Skyline Graphic Background */
-  background-image: 
-    linear-gradient(to bottom, rgba(6, 12, 30, 0.4) 0%, rgba(6, 12, 30, 0.8) 65%, rgba(6, 12, 30, 0.95) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='320' viewBox='0 0 1200 320'%3E%3Cdefs%3E%3ClinearGradient id='bgGrad' x1='0%25' y1='100%25' x2='0%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%2300b4d8' stop-opacity='0.4'/%3E%3Cstop offset='100%25' stop-color='%2300b4d8' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='1200' height='320' fill='none'/%3E%3C!-- City Skyline Silhouette with Cyan Glow --%3E%3Cg fill='%23052652' stroke='%230077b6' stroke-width='1.2'%3E%3Crect x='10' y='140' width='45' height='180'/%3E%3Crect x='60' y='90' width='60' height='230'/%3E%3Crect x='125' y='160' width='40' height='160'/%3E%3Crect x='170' y='70' width='65' height='250'/%3E%3Crect x='240' y='120' width='50' height='200'/%3E%3Crect x='295' y='150' width='45' height='170'/%3E%3Crect x='345' y='100' width='70' height='220'/%3E%3Crect x='420' y='140' width='40' height='180'/%3E%3Crect x='465' y='60' width='75' height='260'/%3E%3Crect x='545' y='110' width='50' height='210'/%3E%3Crect x='600' y='170' width='45' height='150'/%3E%3Crect x='650' y='80' width='65' height='240'/%3E%3Crect x='720' y='130' width='55' height='190'/%3E%3Crect x='780' y='95' width='55' height='225'/%3E%3Crect x='840' y='150' width='45' height='170'/%3E%3Crect x='890' y='75' width='70' height='245'/%3E%3Crect x='965' y='120' width='55' height='200'/%3E%3Crect x='1025' y='160' width='40' height='160'/%3E%3Crect x='1070' y='105' width='65' height='215'/%3E%3Crect x='1140' y='140' width='50' height='180'/%3E%3C/g%3E%3C!-- Lit Windows Cyan Grid Pattern --%3E%3Cg fill='%2300f0ff' opacity='0.75'%3E%3Crect x='75' y='105' width='8' height='10'/%3E%3Crect x='95' y='105' width='8' height='10'/%3E%3Crect x='75' y='130' width='8' height='10'/%3E%3Crect x='95' y='130' width='8' height='10'/%3E%3Crect x='75' y='155' width='8' height='10'/%3E%3Crect x='95' y='155' width='8' height='10'/%3E%3Crect x='185' y='90' width='9' height='12'/%3E%3Crect x='210' y='90' width='9' height='12'/%3E%3Crect x='185' y='118' width='9' height='12'/%3E%3Crect x='210' y='118' width='9' height='12'/%3E%3Crect x='185' y='146' width='9' height='12'/%3E%3Crect x='210' y='146' width='9' height='12'/%3E%3Crect x='485' y='80' width='9' height='12'/%3E%3Crect x='510' y='80' width='9' height='12'/%3E%3Crect x='485' y='108' width='9' height='12'/%3E%3Crect x='510' y='108' width='9' height='12'/%3E%3Crect x='485' y='136' width='9' height='12'/%3E%3Crect x='510' y='136' width='9' height='12'/%3E%3Crect x='670' y='100' width='8' height='10'/%3E%3Crect x='692' y='100' width='8' height='10'/%3E%3Crect x='670' y='125' width='8' height='10'/%3E%3Crect x='692' y='125' width='8' height='10'/%3E%3Crect x='910' y='95' width='9' height='12'/%3E%3Crect x='935' y='95' width='9' height='12'/%3E%3Crect x='910' y='123' width='9' height='12'/%3E%3Crect x='935' y='123' width='9' height='12'/%3E%3C/g%3E%3C!-- Glowing horizon grid lines --%3E%3Cpath d='M0 315 L1200 315' stroke='%2300d4ff' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-  background-position: bottom center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-color: rgba(6, 12, 30, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 16px 20px;
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.85);
-  border: 1px solid #142854;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
 }
 
 /* ==========================================================================
