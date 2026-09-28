@@ -629,16 +629,27 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Position popup anchored to button
+    // Position popup directly under/adjacent to the filter triangle button
     const btnRect = anchorBtn.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    const POPUP_WIDTH = 250;
+
+    // Align popup's right edge with button's right edge for a clean Excel dropdown feel
+    let popupLeft = (btnRect.right + scrollLeft) - POPUP_WIDTH;
+
+    // If it goes past left margin of screen, align popup's left edge to button's left edge
+    if (popupLeft < 10) {
+      popupLeft = btnRect.left + scrollLeft;
+    }
+
+    // Final viewport boundary guard
+    if (popupLeft < 10) popupLeft = 10;
+    if (popupLeft + POPUP_WIDTH > window.innerWidth - 10) {
+      popupLeft = window.innerWidth - POPUP_WIDTH - 10;
+    }
 
     filterPopupEl.style.top = `${btnRect.bottom + scrollTop + 4}px`;
-
-    let popupLeft = btnRect.left + scrollLeft - 180;
-    if (popupLeft < 10) popupLeft = 10;
-    if (popupLeft + 260 > window.innerWidth) popupLeft = window.innerWidth - 270;
     filterPopupEl.style.left = `${popupLeft}px`;
 
     filterPopupEl.classList.remove('hidden');
