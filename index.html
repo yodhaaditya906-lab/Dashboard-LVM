@@ -10,6 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   
+  <!-- html2pdf for Executive PDF Report Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <!-- Custom PowerBI Desktop Replica CSS -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -22,6 +25,12 @@
       <span id="sync-status-text">Live Sync: Terhubung ke Data Master Spreadsheet...</span>
     </div>
     <div class="top-actions">
+      <button id="btn-export-excel" class="btn-live-action btn-excel" title="Download Laporan Excel Data Full">
+        <span>📊</span> Export Excel
+      </button>
+      <button id="btn-export-pdf" class="btn-live-action btn-pdf" title="Download Laporan PDF Executive Summary">
+        <span>📄</span> Export PDF
+      </button>
       <button id="btn-sync-now" class="btn-live-action" title="Refresh data sekarang">
         Refresh Data
       </button>

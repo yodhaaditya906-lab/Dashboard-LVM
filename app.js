@@ -837,6 +837,189 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ==========================================================================
+  // EXPORT ENGINE (EXCEL CSV & EXECUTIVE PDF REPORT)
+  // ==========================================================================
+  function exportToExcel() {
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const unitLabel = selectedKodeUnit === 'ALL' ? 'Semua_Unit' : selectedKodeUnit;
+    const filename = `Laporan_Executive_Mandiri_Merchant_${unitLabel}_${selectedMonth}_${timestamp}.csv`;
+
+    let csvContent = "\uFEFF"; // UTF-8 BOM for Microsoft Excel compatibility
+
+    // Header Metadata
+    csvContent += `"PT BANK MANDIRI (PERSERO) TBK. - EXECUTIVE REPORT DASHBOARD MERCHANT"\n`;
+    csvContent += `"Bulan Monitoring:","${selectedMonth.toUpperCase()}"\n`;
+    csvContent += `"Kode Unit Filter:","${resolveKodeUnitName(selectedKodeUnit) || 'Semua Unit'}"\n`;
+    csvContent += `"Tanggal Export:","${new Date().toLocaleString('id-ID')}"\n\n`;
+
+    // Section 1: Ringkasan SGP
+    csvContent += `"--- RINGKASAN USAK GENUINE & UREG PER SGP ---"\n`;
+    csvContent += `"Nama SGP","USAK Genuine (Agustus)","USAK Genuine (September)","UREG (Agustus)","UREG (September)"\n`;
+
+    const sgpRows = document.querySelectorAll('#sgp-summary-tbody tr');
+    sgpRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length === 5) {
+        const name = `"${cells[0].textContent.replace(/"/g, '""')}"`;
+        const agtUsak = `"${cells[1].textContent.trim()}"`;
+        const sepUsak = `"${cells[2].textContent.trim()}"`;
+        const agtUreg = `"${cells[3].textContent.trim()}"`;
+        const sepUreg = `"${cells[4].textContent.trim()}"`;
+        csvContent += `${name},${agtUsak},${sepUsak},${agtUreg},${sepUreg}\n`;
+      }
+    });
+
+    const elAgtTot = document.getElementById('sgp-total-agustus')?.textContent || '0';
+    const elSepTot = document.getElementById('sgp-total-september')?.textContent || '0';
+    const elAgtUregTot = document.getElementById('sgp-total-ureg-agustus')?.textContent || '0';
+    const elSepUregTot = document.getElementById('sgp-total-ureg-september')?.textContent || '0';
+    csvContent += `"TOTAL OVERALL","${elAgtTot}","${elSepTot}","${elAgtUregTot}","${elSepUregTot}"\n\n`;
+
+    // Section 2: Peringkat Kode Unit MKA
+    csvContent += `"--- RANKING KODE UNIT - MKA ---"\n`;
+    csvContent += `"Rank","Kode Unit - MKA","Jumlah USAK"\n`;
+    const rankRows = document.querySelectorAll('#leaderboard-tbody tr');
+    rankRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length === 3) {
+        csvContent += `"${cells[0].textContent.trim()}","${cells[1].textContent.replace(/"/g, '""')}","${cells[2].textContent.trim()}"\n`;
+      }
+    });
+    const rankTotal = document.getElementById('leaderboard-total-val')?.textContent || '0';
+    csvContent += `"TOTAL OVERALL","","${rankTotal}"\n\n`;
+
+    // Section 3: Detail Debitur Monitoring
+    csvContent += `"--- DETAIL DEBITUR MONITORING (${selectedMonth.toUpperCase()}) ---"\n`;
+    csvContent += `"No","Nama SGP","CIF","Nama Debitur","Rekening","Transaksi","Sales Volume","Status"\n`;
+
+    let currentDataset = (selectedMonth === 'agustus') ? masterDebiturAgustus : masterDebiturSeptember;
+    if (!currentDataset || currentDataset.length === 0) currentDataset = masterDebiturSeptember;
+    let filtered = currentDataset;
+    if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
+      filtered = filtered.filter(d => d.kodeUnit === selectedKodeUnit);
+    }
+    if (tableSearchQuery) {
+      filtered = filtered.filter(d => {
+        return (d.debitur && d.debitur.toLowerCase().includes(tableSearchQuery)) ||
+               (d.sgp && d.sgp.toLowerCase().includes(tableSearchQuery)) ||
+               (d.cif && d.cif.toLowerCase().includes(tableSearchQuery)) ||
+               (d.rekening && d.rekening.toLowerCase().includes(tableSearchQuery)) ||
+               (d.kodeUnit && d.kodeUnit.toLowerCase().includes(tableSearchQuery)) ||
+               (d.status && d.status.toLowerCase().includes(tableSearchQuery));
+      });
+    }
+
+    filtered.forEach((d, i) => {
+      const sgp = `"${(d.sgp || '').replace(/"/g, '""')}"`;
+      const cif = `"${(d.cif || '').replace(/"/g, '""')}"`;
+      const deb = `"${(d.debitur || '').replace(/"/g, '""')}"`;
+      const rek = `"${(d.rekening || '').replace(/"/g, '""')}"`;
+      const trx = `"${d.transaksi || 0}"`;
+      const sv = `"${d.salesVolume || 0}"`;
+      const st = `"${(d.status || '').replace(/"/g, '""')}"`;
+      csvContent += `"${i + 1}",${sgp},${cif},${deb},${rek},${trx},${sv},${st}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportToPdf() {
+    const timestamp = new Date().toLocaleDateString('id-ID');
+    const unitText = resolveKodeUnitName(selectedKodeUnit) || 'Semua Unit';
+
+    const pdfReportEl = document.createElement('div');
+    pdfReportEl.className = 'pdf-report-container';
+    pdfReportEl.style.cssText = `
+      padding: 24px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+      width: 780px;
+      box-sizing: border-box;
+    `;
+
+    pdfReportEl.innerHTML = `
+      <div style="border-bottom: 3px solid #003D79; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1 style="color: #003D79; font-size: 20px; font-weight: 800; margin: 0;">PT BANK MANDIRI (PERSERO) TBK.</h1>
+          <h2 style="color: #FFB700; font-size: 13px; font-weight: 700; margin: 4px 0 0 0; text-transform: uppercase;">Executive Summary Report - Merchant Dashboard</h2>
+        </div>
+        <div style="text-align: right; font-size: 11px; color: #64748b;">
+          <div><strong>Tanggal Laporan:</strong> ${timestamp}</div>
+          <div><strong>Periode:</strong> ${selectedMonth.toUpperCase()}</div>
+          <div><strong>Kode Unit:</strong> ${escapeAttr(unitText)}</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+        <div style="background: #f8fafc; border: 1.5px solid #003D79; border-radius: 6px; padding: 12px; text-align: center;">
+          <div style="font-size: 11px; color: #64748b; font-weight: 600;">TOTAL USAK GENUINE</div>
+          <div style="font-size: 22px; font-weight: 800; color: #003D79; margin-top: 4px;">
+            ${selectedMonth === 'agustus' ? totalUsakGenuineAgustus : totalUsakGenuineSeptember}
+          </div>
+        </div>
+        <div style="background: #fff8ea; border: 1.5px solid #FFB700; border-radius: 6px; padding: 12px; text-align: center;">
+          <div style="font-size: 11px; color: #64748b; font-weight: 600;">TOTAL UREG</div>
+          <div style="font-size: 22px; font-weight: 800; color: #ea7200; margin-top: 4px;">
+            ${selectedMonth === 'agustus' ? totalUregAgustus : totalUregSeptember}
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <h3 style="font-size: 13px; color: #003D79; border-left: 4px solid #FFB700; padding-left: 8px; margin-bottom: 8px;">Ringkasan Kinerja SGP (USAK Genuine & UREG)</h3>
+        ${document.querySelector('.sgp-summary-card')?.outerHTML || ''}
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <h3 style="font-size: 13px; color: #003D79; border-left: 4px solid #FFB700; padding-left: 8px; margin-bottom: 8px;">Top Ranking Unit MKA</h3>
+        ${document.querySelector('.leaderboard-card-yellow')?.outerHTML || ''}
+      </div>
+
+      <div style="font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 20px;">
+        PT Bank Mandiri (Persero) Tbk. Berizin dan Diawasi oleh Otoritas Jasa Keuangan (OJK) dan Bank Indonesia (BI), Serta Merupakan Peserta Penjaminan LPS.
+      </div>
+    `;
+
+    document.body.appendChild(pdfReportEl);
+
+    if (window.html2pdf) {
+      const opt = {
+        margin:       0.4,
+        filename:     `Laporan_Executive_Mandiri_Merchant_${selectedMonth}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      window.html2pdf().set(opt).from(pdfReportEl).save().then(() => {
+        document.body.removeChild(pdfReportEl);
+      }).catch(err => {
+        console.error('PDF export error:', err);
+        document.body.removeChild(pdfReportEl);
+        window.print();
+      });
+    } else {
+      document.body.removeChild(pdfReportEl);
+      window.print();
+    }
+  }
+
+  const btnExportExcel = document.getElementById('btn-export-excel');
+  if (btnExportExcel) btnExportExcel.addEventListener('click', exportToExcel);
+
+  const btnExportPdf = document.getElementById('btn-export-pdf');
+  if (btnExportPdf) btnExportPdf.addEventListener('click', exportToPdf);
+
   const debiturTableContainer = document.querySelector('.debitur-table-container');
   if (debiturTableContainer) {
     debiturTableContainer.addEventListener('scroll', closeColumnFilterPopup, { passive: true });
