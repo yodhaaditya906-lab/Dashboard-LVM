@@ -10,8 +10,8 @@
 }
 
 body.powerbi-theme {
-  background-color: #040914;
-  background-image: linear-gradient(180deg, rgba(4, 9, 20, 0.45) 0%, rgba(2, 6, 18, 0.65) 100%), url('bg-galaxy.png');
+  background-color: #020612;
+  background-image: linear-gradient(180deg, rgba(2, 6, 18, 0.25) 0%, rgba(2, 6, 18, 0.45) 100%), url('bg-galaxy.png');
   background-size: cover;
   background-position: center center;
   background-attachment: fixed;
@@ -31,7 +31,9 @@ body.powerbi-theme {
 .top-live-bar {
   width: 100%;
   max-width: 1360px;
-  background-color: #020612;
+  background-color: rgba(2, 6, 18, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid #142854;
   border-radius: 4px;
   padding: 8px 16px;
@@ -116,11 +118,9 @@ body.powerbi-theme {
   width: 100%;
   max-width: 1360px;
   min-height: 700px;
-  background-color: #040914;
-  background-image: linear-gradient(180deg, rgba(4, 9, 20, 0.45) 0%, rgba(2, 6, 18, 0.65) 100%), url('bg-galaxy.png');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  background-color: rgba(6, 12, 30, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   padding: 16px 20px;
   position: relative;
   display: flex;
@@ -143,7 +143,9 @@ body.powerbi-theme {
 
 /* SGP Summary Table Card (Replaces Top KPI Cards as per design spec) */
 .sgp-summary-card {
-  background-color: #020712;
+  background-color: rgba(2, 7, 18, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid #142854;
   border-radius: 2px;
   width: 600px;
@@ -160,6 +162,7 @@ body.powerbi-theme {
 
 .sgp-summary-table {
   width: 100%;
+  min-width: 450px;
   table-layout: fixed;
   border-collapse: collapse;
   font-family: 'Segoe UI', Arial, sans-serif;
@@ -173,22 +176,29 @@ body.powerbi-theme {
   color: #000000;
   font-weight: 600;
   border: 1px solid #000000;
-  padding: 4px 8px;
+  padding: 4px 6px;
   text-align: center;
-  font-size: 13px;
+  font-size: 12.5px;
   box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sgp-summary-table thead tr:first-child th {
   position: sticky;
   top: 0;
   z-index: 12;
+  height: 25px;
+  line-height: 1.2;
 }
 
 .sgp-summary-table thead tr:nth-child(2) th {
   position: sticky;
   top: 24px;
   z-index: 11;
+  height: 22px;
+  line-height: 1.2;
 }
 
 .sgp-summary-table th.active-blue-border {
@@ -271,7 +281,9 @@ body.powerbi-theme {
 .mka-filter-panel {
   display: flex;
   align-items: stretch;
-  background-color: #000000;
+  background-color: rgba(2, 8, 24, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid #0055d4;
   border-radius: 4px;
   min-height: 88px;
@@ -281,7 +293,7 @@ body.powerbi-theme {
 }
 
 .mka-info-box {
-  background-color: #020b24;
+  background-color: rgba(2, 11, 36, 0.85);
   padding: 10px 16px;
   display: flex;
   flex-direction: column;
@@ -307,7 +319,7 @@ body.powerbi-theme {
 }
 
 .mka-dropdown-box {
-  background-color: #0000aa;
+  background-color: rgba(0, 0, 150, 0.8);
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
@@ -1089,5 +1101,211 @@ body.powerbi-theme {
 .excel-filter-btn-apply:hover {
   box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (MOBILE & TABLET BREAKPOINTS)
+   ========================================================================== */
+
+/* Tablet Breakpoint (Max Width: 1024px) */
+@media screen and (max-width: 1024px) {
+  .powerbi-canvas {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .top-row-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sgp-summary-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .top-row-spacer {
+    display: none;
+  }
+
+  .mka-filter-panel {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .mka-info-box {
+    flex: 1;
+    width: auto;
+  }
+
+  .mka-dropdown-box {
+    flex: 1;
+    width: auto;
+  }
+
+  .bottom-section {
+    width: 100%;
+  }
+
+  .leaderboard-card-yellow {
+    width: 100%;
+  }
+}
+
+/* Mobile Breakpoint (Max Width: 768px) */
+@media screen and (max-width: 768px) {
+  body.powerbi-theme {
+    padding: 6px;
+  }
+
+  .top-live-bar {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .live-status {
+    font-size: 11px;
+  }
+
+  .btn-live-action {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .powerbi-canvas {
+    padding: 10px 8px;
+    border-radius: 6px;
+  }
+
+  .sgp-summary-table {
+    font-size: 11.5px;
+    min-width: 450px;
+  }
+
+  .sgp-summary-table th {
+    font-size: 11px;
+    padding: 3px 4px;
+    white-space: nowrap;
+  }
+
+  .sgp-summary-table thead tr:first-child th {
+    top: 0;
+    z-index: 12;
+    height: 24px;
+  }
+
+  .sgp-summary-table thead tr:nth-child(2) th {
+    top: 23px;
+    z-index: 11;
+    height: 22px;
+  }
+
+  .sgp-summary-table td {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+
+  .sgp-table-wrapper {
+    max-height: 160px;
+  }
+
+  .mka-filter-panel {
+    flex-direction: column;
+  }
+
+  .mka-info-box {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #00388a;
+    padding: 8px 12px;
+  }
+
+  .mka-dropdown-box {
+    width: 100%;
+    padding: 8px 12px;
+  }
+
+  .table-header-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .table-title-group {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .table-title {
+    font-size: 13px;
+  }
+
+  .month-select {
+    font-size: 11.5px;
+    padding: 4px 24px 4px 10px;
+  }
+
+  .table-search-wrapper {
+    width: 100%;
+  }
+
+  .table-search-input {
+    width: 100%;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .debitur-table-container {
+    max-height: 380px;
+  }
+
+  .debitur-table {
+    min-width: 750px;
+  }
+
+  .debitur-table th, .debitur-table td {
+    padding: 6px 8px;
+    font-size: 11.5px;
+  }
+
+  .leaderboard-card-yellow {
+    width: 100%;
+  }
+
+  .leaderboard-table th {
+    font-size: 11.5px;
+    padding: 5px 8px;
+  }
+
+  .leaderboard-table td {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* Extra Small Mobile (Max Width: 480px) */
+@media screen and (max-width: 480px) {
+  .top-live-bar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .top-actions {
+    justify-content: center;
+  }
+
+  .modal-card {
+    width: 95%;
+    max-width: 95vw;
+  }
+
+  .excel-filter-popup {
+    width: 90vw !important;
+    left: 5vw !important;
+    right: 5vw !important;
+  }
+}
+
 
 
