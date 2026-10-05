@@ -843,55 +843,65 @@ document.addEventListener('DOMContentLoaded', () => {
   function exportToExcel() {
     const timestamp = new Date().toISOString().slice(0, 10);
     const unitLabel = selectedKodeUnit === 'ALL' ? 'Semua_Unit' : selectedKodeUnit;
-    const filename = `Laporan_Executive_Mandiri_Merchant_${unitLabel}_${selectedMonth}_${timestamp}.csv`;
+    const filename = `Laporan_Executive_Mandiri_Merchant_${unitLabel}_${selectedMonth}_${timestamp}.xlsx`;
 
-    let csvContent = "\uFEFF"; // UTF-8 BOM for Microsoft Excel compatibility
-
-    // Header Metadata
-    csvContent += `"PT BANK MANDIRI (PERSERO) TBK. - EXECUTIVE REPORT DASHBOARD MERCHANT"\n`;
-    csvContent += `"Bulan Monitoring:","${selectedMonth.toUpperCase()}"\n`;
-    csvContent += `"Kode Unit Filter:","${resolveKodeUnitName(selectedKodeUnit) || 'Semua Unit'}"\n`;
-    csvContent += `"Tanggal Export:","${new Date().toLocaleString('id-ID')}"\n\n`;
-
-    // Section 1: Ringkasan SGP
-    csvContent += `"--- RINGKASAN USAK GENUINE & UREG PER SGP ---"\n`;
-    csvContent += `"Nama SGP","USAK Genuine (Agustus)","USAK Genuine (September)","UREG (Agustus)","UREG (September)"\n`;
+    // ------------------------------------------------------------------------
+    // SHEET 1 DATA: RINGKASAN EXECUTIVE (SGP & RANKING MKA)
+    // ------------------------------------------------------------------------
+    const summaryData = [
+      ["PT BANK MANDIRI (PERSERO) TBK. - EXECUTIVE REPORT DASHBOARD MERCHANT"],
+      ["Bulan Monitoring:", selectedMonth.toUpperCase()],
+      ["Kode Unit Filter:", resolveKodeUnitName(selectedKodeUnit) || 'Semua Unit'],
+      ["Tanggal Export:", new Date().toLocaleString('id-ID')],
+      [],
+      ["--- RINGKASAN USAK GENUINE & UREG PER SGP ---"],
+      ["Nama SGP", "USAK Genuine (Agustus)", "USAK Genuine (September)", "UREG (Agustus)", "UREG (September)"]
+    ];
 
     const sgpRows = document.querySelectorAll('#sgp-summary-tbody tr');
     sgpRows.forEach(row => {
       const cells = row.querySelectorAll('td');
       if (cells.length === 5) {
-        const name = `"${cells[0].textContent.replace(/"/g, '""')}"`;
-        const agtUsak = `"${cells[1].textContent.trim()}"`;
-        const sepUsak = `"${cells[2].textContent.trim()}"`;
-        const agtUreg = `"${cells[3].textContent.trim()}"`;
-        const sepUreg = `"${cells[4].textContent.trim()}"`;
-        csvContent += `${name},${agtUsak},${sepUsak},${agtUreg},${sepUreg}\n`;
+        summaryData.push([
+          cells[0].textContent.trim(),
+          parseInt(cells[1].textContent.trim()) || 0,
+          parseInt(cells[2].textContent.trim()) || 0,
+          parseInt(cells[3].textContent.trim()) || 0,
+          parseInt(cells[4].textContent.trim()) || 0
+        ]);
       }
     });
 
-    const elAgtTot = document.getElementById('sgp-total-agustus')?.textContent || '0';
-    const elSepTot = document.getElementById('sgp-total-september')?.textContent || '0';
-    const elAgtUregTot = document.getElementById('sgp-total-ureg-agustus')?.textContent || '0';
-    const elSepUregTot = document.getElementById('sgp-total-ureg-september')?.textContent || '0';
-    csvContent += `"TOTAL OVERALL","${elAgtTot}","${elSepTot}","${elAgtUregTot}","${elSepUregTot}"\n\n`;
+    const elAgtTot = parseInt(document.getElementById('sgp-total-agustus')?.textContent) || 0;
+    const elSepTot = parseInt(document.getElementById('sgp-total-september')?.textContent) || 0;
+    const elAgtUregTot = parseInt(document.getElementById('sgp-total-ureg-agustus')?.textContent) || 0;
+    const elSepUregTot = parseInt(document.getElementById('sgp-total-ureg-september')?.textContent) || 0;
+    summaryData.push(["TOTAL OVERALL", elAgtTot, elSepTot, elAgtUregTot, elSepUregTot]);
 
-    // Section 2: Peringkat Kode Unit MKA
-    csvContent += `"--- RANKING KODE UNIT - MKA ---"\n`;
-    csvContent += `"Rank","Kode Unit - MKA","Jumlah USAK"\n`;
+    summaryData.push([]);
+    summaryData.push(["--- RANKING KODE UNIT - MKA ---"]);
+    summaryData.push(["Rank", "Kode Unit - MKA", "Jumlah USAK"]);
+
     const rankRows = document.querySelectorAll('#leaderboard-tbody tr');
     rankRows.forEach(row => {
       const cells = row.querySelectorAll('td');
       if (cells.length === 3) {
-        csvContent += `"${cells[0].textContent.trim()}","${cells[1].textContent.replace(/"/g, '""')}","${cells[2].textContent.trim()}"\n`;
+        summaryData.push([
+          parseInt(cells[0].textContent.trim()) || cells[0].textContent.trim(),
+          cells[1].textContent.trim(),
+          parseInt(cells[2].textContent.trim()) || 0
+        ]);
       }
     });
-    const rankTotal = document.getElementById('leaderboard-total-val')?.textContent || '0';
-    csvContent += `"TOTAL OVERALL","","${rankTotal}"\n\n`;
+    const rankTotal = parseInt(document.getElementById('leaderboard-total-val')?.textContent) || 0;
+    summaryData.push(["TOTAL OVERALL", "", rankTotal]);
 
-    // Section 3: Detail Debitur Monitoring
-    csvContent += `"--- DETAIL DEBITUR MONITORING (${selectedMonth.toUpperCase()}) ---"\n`;
-    csvContent += `"No","Nama SGP","CIF","Nama Debitur","Rekening","Transaksi","Sales Volume","Status"\n`;
+    // ------------------------------------------------------------------------
+    // SHEET 2 DATA: DATA DETAIL DEBITUR (ACUAN FULL RIBUAN DATA)
+    // ------------------------------------------------------------------------
+    const debiturData = [
+      ["No", "Nama SGP", "CIF", "Nama Debitur", "Rekening", "Transaksi", "Sales Volume", "Status"]
+    ];
 
     let currentDataset = (selectedMonth === 'agustus') ? masterDebiturAgustus : masterDebiturSeptember;
     if (!currentDataset || currentDataset.length === 0) currentDataset = masterDebiturSeptember;
@@ -911,25 +921,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     filtered.forEach((d, i) => {
-      const sgp = `"${(d.sgp || '').replace(/"/g, '""')}"`;
-      const cif = `"${(d.cif || '').replace(/"/g, '""')}"`;
-      const deb = `"${(d.debitur || '').replace(/"/g, '""')}"`;
-      const rek = `"${(d.rekening || '').replace(/"/g, '""')}"`;
-      const trx = `"${d.transaksi || 0}"`;
-      const sv = `"${d.salesVolume || 0}"`;
-      const st = `"${(d.status || '').replace(/"/g, '""')}"`;
-      csvContent += `"${i + 1}",${sgp},${cif},${deb},${rek},${trx},${sv},${st}\n`;
+      debiturData.push([
+        i + 1,
+        d.sgp || '-',
+        d.cif || '-',
+        d.debitur || '-',
+        d.rekening || '-',
+        d.transaksi || 0,
+        d.salesVolume || 0,
+        d.status || '-'
+      ]);
     });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (window.XLSX) {
+      const wb = XLSX.utils.book_new();
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+      const wsDebitur = XLSX.utils.aoa_to_sheet(debiturData);
+
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan Executive");
+      XLSX.utils.book_append_sheet(wb, wsDebitur, "Data Detail Debitur");
+
+      XLSX.writeFile(wb, filename);
+    } else {
+      // Fallback multi-sheet HTML Excel format
+      let excelXml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+            <x:ExcelWorksheet><x:Name>Ringkasan Executive</x:Name><x:WorksheetSource HRef="#sheet1"/></x:ExcelWorksheet>
+            <x:ExcelWorksheet><x:Name>Data Detail Debitur</x:Name><x:WorksheetSource HRef="#sheet2"/></x:ExcelWorksheet>
+          </x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+        </head>
+        <body>
+          <table id="sheet1">`;
+      summaryData.forEach(row => {
+        excelXml += `<tr>${row.map(c => `<td>${escapeAttr(c)}</td>`).join('')}</tr>`;
+      });
+      excelXml += `</table><br/><table id="sheet2">`;
+      debiturData.forEach(row => {
+        excelXml += `<tr>${row.map(c => `<td>${escapeAttr(c)}</td>`).join('')}</tr>`;
+      });
+      excelXml += `</table></body></html>`;
+
+      const blob = new Blob([excelXml], { type: 'application/vnd.ms-excel' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename.replace('.xlsx', '.xls'));
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   }
 
   function exportToPdf() {
