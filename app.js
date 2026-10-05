@@ -298,10 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Limit DOM rendering to top 500 rows when viewing ALL or broad search (prevents Chrome DOM buffer crashes)
-    const MAX_DOM_ROWS = 500;
-    const isCapped = totalCount > MAX_DOM_ROWS;
-    const renderLimit = isCapped ? MAX_DOM_ROWS : totalCount;
+    // Limit DOM rendering to top 80 rows on mobile / 300 on desktop (prevents mobile CPU/RAM lag)
+    const isMobileDevice = window.innerWidth <= 768;
+    const DEFAULT_CAP = isMobileDevice ? 80 : 300;
+    const currentMaxDom = window._debiturDomCap || DEFAULT_CAP;
+    const isCapped = totalCount > currentMaxDom;
+    const renderLimit = isCapped ? currentMaxDom : totalCount;
 
     const rowsHtml = [];
     for (let idx = 0; idx < renderLimit; idx++) {
@@ -330,14 +332,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isCapped) {
       rowsHtml.push(`
         <tr class="row-dark">
-          <td colspan="8" style="text-align: center; padding: 10px; color: #38bdf8; font-style: italic;">
-            Menampilkan ${MAX_DOM_ROWS.toLocaleString('id-ID')} dari ${totalCount.toLocaleString('id-ID')} total debitur (${selectedMonth.toUpperCase()}) hasil pencarian/filter. Gunakan pencarian lebih spesifik atau pilih Kode Unit untuk menyempitkan hasil.
+          <td colspan="8" style="text-align: center; padding: 10px; color: #38bdf8;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+              <span>Menampilkan <strong>${renderLimit.toLocaleString('id-ID')}</strong> dari <strong>${totalCount.toLocaleString('id-ID')}</strong> debitur (${selectedMonth.toUpperCase()}).</span>
+              <button id="btn-load-more-debitur" style="background: #0284c7; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 12px; margin-top: 2px;">
+                ⚡ Muat 100 Data Lagi (${(totalCount - renderLimit).toLocaleString('id-ID')} tersisa)
+              </button>
+            </div>
           </td>
         </tr>
       `);
     }
 
     tbody.innerHTML = rowsHtml.join('');
+
+    const btnLoadMore = document.getElementById('btn-load-more-debitur');
+    if (btnLoadMore) {
+      btnLoadMore.addEventListener('click', () => {
+        window._debiturDomCap = (window._debiturDomCap || DEFAULT_CAP) + 100;
+        renderDebiturTable();
+      });
+    }
 
     // Update KPI Displays if present
     const elUsak = document.getElementById('kpi-usak-val');
@@ -548,11 +563,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Debounce Helper for Mobile & Desktop Performance
+  function debounce(fn, delay = 150) {
+    let timer = null;
+    return function (...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+
   if (unitSearchInput) {
-    unitSearchInput.addEventListener('input', () => {
+    const debouncedUnitSearch = debounce(() => {
       populateKodeUnitSelectOptions();
       renderUnitAutocompleteSuggestions();
-    });
+    }, 120);
+
+    unitSearchInput.addEventListener('input', debouncedUnitSearch);
 
     unitSearchInput.addEventListener('focus', () => {
       if (unitSearchInput.value.trim().length > 0) {
@@ -562,9 +588,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (debiturSearchInput) {
-    debiturSearchInput.addEventListener('input', (e) => {
+    const debouncedDebiturSearch = debounce((e) => {
       tableSearchQuery = e.target.value.trim().toLowerCase();
       renderDebiturTable();
+    }, 150);
+
+    debiturSearchInput.addEventListener('input', (e) => {
+      tableSearchQuery = e.target.value.trim().toLowerCase();
+      debouncedDebiturSearch(e);
     });
   }
 
