@@ -366,8 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update KPI Displays if present
     const elUsak = document.getElementById('kpi-usak-val');
     const elUreg = document.getElementById('kpi-ureg-val');
-    const activeTotalUsak = (selectedMonth === 'agustus') ? totalUsakGenuineAgustus : totalUsakGenuineSeptember;
-    const activeTotalUreg = (selectedMonth === 'agustus') ? totalUregAgustus : totalUregSeptember;
+    const activeTotalUsak = (selectedMonth === 'agustus') ? totalUsakGenuineAgustus : (selectedMonth === 'oktober' ? totalUsakGenuineOktober : totalUsakGenuineSeptember);
+    const activeTotalUreg = (selectedMonth === 'agustus') ? totalUregAgustus : (selectedMonth === 'oktober' ? totalUregOktober : totalUregSeptember);
 
     const hasAnyActiveFilter = (selectedKodeUnit !== 'ALL' || tableSearchQuery || columnSort.colKey || Object.values(columnFilters).some(v => v !== null));
 
@@ -1919,13 +1919,31 @@ document.addEventListener('DOMContentLoaded', () => {
       box-sizing: border-box;
     `;
 
-    const elSepUregTot = parseInt(document.getElementById('sgp-total-ureg-september')?.textContent) || totalUregSeptember;
-    const elAgtUregTot = parseInt(document.getElementById('sgp-total-ureg-agustus')?.textContent) || totalUregAgustus;
-    const elSepUsakTot = parseInt(document.getElementById('sgp-total-september')?.textContent) || totalUsakGenuineSeptember;
-    const elAgtUsakTot = parseInt(document.getElementById('sgp-total-agustus')?.textContent) || totalUsakGenuineAgustus;
+    const activeDataset = (selectedMonth === 'agustus')
+      ? masterDebiturAgustus
+      : (selectedMonth === 'oktober' ? masterDebiturOktober : masterDebiturSeptember);
 
-    const pdfUsakVal = selectedMonth === 'agustus' ? elAgtUsakTot : elSepUsakTot;
-    const pdfUregVal = selectedMonth === 'agustus' ? elAgtUregTot : elSepUregTot;
+    let calcUsak = 0;
+    let calcUreg = 0;
+
+    const filteredForReport = (selectedKodeUnit && selectedKodeUnit !== 'ALL')
+      ? (activeDataset || []).filter(d => d.kodeUnit === selectedKodeUnit)
+      : (activeDataset || []);
+
+    filteredForReport.forEach(d => {
+      if (d.isGenuine) calcUsak++;
+      if (isUregStatus(d.status)) calcUreg++;
+    });
+
+    if (calcUsak === 0 && selectedKodeUnit === 'ALL') {
+      calcUsak = (selectedMonth === 'agustus') ? totalUsakGenuineAgustus : (selectedMonth === 'oktober' ? totalUsakGenuineOktober : totalUsakGenuineSeptember);
+    }
+    if (calcUreg === 0 && selectedKodeUnit === 'ALL') {
+      calcUreg = (selectedMonth === 'agustus') ? totalUregAgustus : (selectedMonth === 'oktober' ? totalUregOktober : totalUregSeptember);
+    }
+
+    const pdfUsakVal = calcUsak;
+    const pdfUregVal = calcUreg;
 
     pdfReportEl.innerHTML = `
       <div style="border-bottom: 3px solid #003D79; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
