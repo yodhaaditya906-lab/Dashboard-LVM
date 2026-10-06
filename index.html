@@ -10,8 +10,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   
-  <!-- SheetJS XLSX for Multi-Sheet Excel Export -->
+  <!-- SheetJS XLSX for Multi-Sheet Excel Export (Fallback) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- ExcelJS for Styled Excel & Embedded Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <!-- Chart.js for High-Resolution Visual Chart Generation -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <!-- html2pdf for Executive PDF Report Generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -176,7 +180,7 @@
     <!-- EXCEL COLUMN FILTER POPUP OVERLAY -->
     <div id="column-filter-popup" class="excel-filter-popup hidden"></div>
 
-    <!-- BOTTOM SECTION: YELLOW LEADERBOARD CARD -->
+    <!-- BOTTOM SECTION: YELLOW LEADERBOARD CARD & USAK COMPARISON CHART -->
     <div class="bottom-section">
       
       <!-- Yellow Leaderboard Card (Lower Left) -->
@@ -204,6 +208,41 @@
               </tr>
             </tfoot>
           </table>
+        </div>
+      </div>
+
+      <!-- USAK Comparison Card (Lower Right / Samping Daftar Peringkat) -->
+      <div class="usak-comparison-card">
+        <div class="usak-chart-header">
+          <div class="usak-chart-title-group">
+            <div>
+              <div class="usak-chart-title">Perbandingan USAK Genuine</div>
+              <div class="usak-chart-subtitle" id="usak-chart-subtitle">Agustus vs September • Semua Unit</div>
+            </div>
+          </div>
+          <div class="usak-chart-badges">
+            <div class="usak-badge badge-agustus">
+              <span class="badge-dot dot-agustus"></span>
+              <span class="badge-label">Agustus:</span>
+              <strong id="badge-val-agt">0</strong>
+            </div>
+            <div class="usak-badge badge-september">
+              <span class="badge-dot dot-september"></span>
+              <span class="badge-label">September:</span>
+              <strong id="badge-val-sep">0</strong>
+            </div>
+            <div class="usak-badge badge-oktober" id="badge-oktober-box" style="display: none;">
+              <span class="badge-dot dot-oktober"></span>
+              <span class="badge-label">Oktober:</span>
+              <strong id="badge-val-okt">0</strong>
+            </div>
+            <div class="usak-badge badge-growth" id="badge-growth-chip">
+              <span id="badge-growth-val">+0</span>
+            </div>
+          </div>
+        </div>
+        <div class="usak-chart-container">
+          <canvas id="dashboard-usak-chart"></canvas>
         </div>
       </div>
 

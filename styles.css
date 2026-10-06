@@ -654,7 +654,117 @@ body.powerbi-theme {
    ========================================================================== */
 .bottom-section {
   display: flex;
-  margin-top: 4px;
+  gap: 14px;
+  align-items: stretch;
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   USAK COMPARISON CHART CARD (LOWER RIGHT)
+   ========================================================================== */
+.usak-comparison-card {
+  flex: 1;
+  min-width: 0;
+  background: linear-gradient(145deg, #0b1426, #0e1b38);
+  border: 1px solid #1e3a6a;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  box-sizing: border-box;
+}
+
+.usak-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.usak-chart-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usak-chart-icon {
+  font-size: 20px;
+}
+
+.usak-chart-title {
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.3px;
+}
+
+.usak-chart-subtitle {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.usak-chart-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-agustus {
+  background-color: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+.dot-september {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+.dot-oktober {
+  background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.badge-growth {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  font-weight: 700;
+}
+
+.badge-growth.negative {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.usak-chart-container {
+  flex: 1;
+  position: relative;
+  min-height: 220px;
+  max-height: 250px;
+  width: 100%;
 }
 
 /* Yellow Leaderboard Container */
@@ -1304,13 +1414,16 @@ body.powerbi-theme {
     font-size: 11.5px;
   }
 
+  .bottom-section {
+    flex-direction: column;
+  }
+
   .leaderboard-card-yellow {
     width: 100%;
   }
 
-  .leaderboard-table th {
-    font-size: 11.5px;
-    padding: 5px 8px;
+  .usak-comparison-card {
+    width: 100%;
   }
 
   .leaderboard-table td {
