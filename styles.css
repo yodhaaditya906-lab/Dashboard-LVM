@@ -1416,14 +1416,22 @@ body.powerbi-theme {
 
   .bottom-section {
     flex-direction: column;
-  }
-
-  .leaderboard-card-yellow {
-    width: 100%;
+    gap: 12px;
   }
 
   .usak-comparison-card {
     width: 100%;
+    order: -1; /* Muncul langsung di atas leaderboard agar segera terlihat di HP */
+  }
+
+  .usak-chart-container {
+    height: 240px;
+    min-height: 220px;
+  }
+
+  .leaderboard-card-yellow {
+    width: 100%;
+    order: 2;
   }
 
   .leaderboard-table td {
@@ -1442,6 +1450,17 @@ body.powerbi-theme {
 
   .top-actions {
     justify-content: center;
+  }
+
+  .usak-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .usak-chart-badges {
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .modal-card {
