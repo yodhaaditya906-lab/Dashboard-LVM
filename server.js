@@ -49,7 +49,7 @@ const server = http.createServer((req, res) => {
 });
 
 if (!process.env.VERCEL) {
-  server.listen(PORT, '0.0.0.0', () => {
+  server.listen(PORT, () => {
     console.log(`🚀 Mandiri Merchant Dashboard running at http://localhost:${PORT}/`);
     console.log(`📊 Live Google Sheets Server-Side Sync active from config.json`);
   });

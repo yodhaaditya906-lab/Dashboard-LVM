@@ -84,7 +84,34 @@ function isUreg(statusStr) {
   return true;
 }
 
-function processRawCsv(csvText) {
+const INDO_MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+function formatIndonesianDate(str, fallback = '-') {
+  if (!str || str === '-' || str.trim() === '') return fallback;
+  const s = str.trim();
+  const parts = s.split(/[\/\-]/);
+  if (parts.length === 3) {
+    let d, m, y;
+    if (parts[0].length === 4) {
+      y = parseInt(parts[0], 10);
+      m = parseInt(parts[1], 10) - 1;
+      d = parseInt(parts[2], 10);
+    } else {
+      d = parseInt(parts[0], 10);
+      m = parseInt(parts[1], 10) - 1;
+      y = parseInt(parts[2], 10);
+    }
+    if (!isNaN(d) && m >= 0 && m < 12 && !isNaN(y)) {
+      return `${d} ${INDO_MONTH_NAMES[m]} ${y}`;
+    }
+  }
+  return s;
+}
+
+function processRawCsv(csvText, monthContext = '') {
   if (!csvText) return null;
   const rawRows = parseCsv(csvText);
   if (!rawRows || rawRows.length === 0) return null;
@@ -119,6 +146,17 @@ function processRawCsv(csvText) {
     const transaksi = parseInt(getVal('transaksi', 'frekuensi_30days', 'frek_30days', 'frek')) || 0;
     const salesVolume = parseInt(getVal('sales volume', 'sv_30days', 'sv', 'volume')) || 0;
     const status = getVal('status', 'ureg_lvm', 'usak_lvm') || 'NON UREG';
+    const taggingInput = getVal('tagging', 'tag', 'keterangan_pipeline', 'pipeline');
+    const tanggalInput = getVal('tanggal', 'tgl', 'date', 'tgl_transaksi', 'tgl_update', 'tanggal_data', 'periode', 'tgl debitur');
+    let fallbackTanggal = '-';
+    const lowerContext = (monthContext || '').toLowerCase();
+    if (lowerContext.includes('agus')) fallbackTanggal = '31 Agustus 2026';
+    else if (lowerContext.includes('okt')) fallbackTanggal = '31 Oktober 2026';
+    else if (lowerContext.includes('sep')) fallbackTanggal = '30 September 2026';
+    else fallbackTanggal = '30 September 2026';
+
+    const tanggal = formatIndonesianDate(tanggalInput, fallbackTanggal);
+    const tagging = taggingInput || tanggal;
 
     if (!cif && !debitur && !kodeUnitInput && !namaSgpInput) return;
 
@@ -163,6 +201,8 @@ function processRawCsv(csvText) {
       transaksi,
       salesVolume,
       status,
+      tagging,
+      tanggal: tagging,
       isGenuine,
       rowStyle
     });
@@ -318,15 +358,16 @@ function buildPayload(parsedSeptember, parsedAgustus, parsedOktober = null) {
 
 async function fetchDualMonthData() {
   const docId = '1p7YcnAdVNSZjYZ5oyu6hUmMNkyOlfVzSErJGe84lmfc';
-  const urlSeptember = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Detail Debitur')}`;
-  const urlAgustus = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Detail Debitur Agustus')}`;
+  // Data Master September (gid: 1977494811) and Data Master Agustus (gid: 2105617517)
+  const urlSeptember = `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=1977494811`;
+  const urlAgustus = `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=2105617517`;
 
   const [csvSeptember, csvAgustus, csvOktober] = await Promise.all([
-    fetchHttpsText(urlSeptember, 10000).catch(err => {
+    fetchHttpsText(urlSeptember, 30000).catch(err => {
       console.warn('Error fetching September sheet:', err.message);
       return fs.existsSync(LOCAL_CSV_SEPTEMBER) ? fs.readFileSync(LOCAL_CSV_SEPTEMBER, 'utf8') : '';
     }),
-    fetchHttpsText(urlAgustus, 10000).catch(err => {
+    fetchHttpsText(urlAgustus, 30000).catch(err => {
       console.warn('Error fetching Agustus sheet:', err.message);
       return fs.existsSync(LOCAL_CSV_AGUSTUS) ? fs.readFileSync(LOCAL_CSV_AGUSTUS, 'utf8') : '';
     }),
@@ -343,9 +384,9 @@ async function fetchDualMonthData() {
     fs.writeFile(LOCAL_CSV_AGUSTUS, csvAgustus, 'utf8', () => {});
   }
 
-  const parsedSeptember = processRawCsv(csvSeptember);
-  const parsedAgustus = processRawCsv(csvAgustus);
-  const parsedOktober = csvOktober ? processRawCsv(csvOktober) : null;
+  const parsedSeptember = processRawCsv(csvSeptember, 'september');
+  const parsedAgustus = processRawCsv(csvAgustus, 'agustus');
+  const parsedOktober = csvOktober ? processRawCsv(csvOktober, 'oktober') : null;
 
   return buildPayload(parsedSeptember, parsedAgustus, parsedOktober);
 }
@@ -371,9 +412,9 @@ function loadLocalCache() {
     }
 
     if (csvSep || csvAgus || csvOkt) {
-      const parsedSep = processRawCsv(csvSep);
-      const parsedAgus = processRawCsv(csvAgus);
-      const parsedOkt = csvOkt ? processRawCsv(csvOkt) : null;
+      const parsedSep = processRawCsv(csvSep, 'september');
+      const parsedAgus = processRawCsv(csvAgus, 'agustus');
+      const parsedOkt = csvOkt ? processRawCsv(csvOkt, 'oktober') : null;
       const payload = buildPayload(parsedSep, parsedAgus, parsedOkt);
       inMemoryCache = payload;
       return payload;

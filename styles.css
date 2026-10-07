@@ -576,7 +576,7 @@ body.powerbi-theme {
 
 .debitur-table {
   width: 100%;
-  min-width: 1200px;
+  min-width: 1400px;
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 12.5px;
@@ -606,6 +606,8 @@ body.powerbi-theme {
 .debitur-table th.th-transaksi { width: 95px; text-align: right; }
 .debitur-table th.th-sv { width: 125px; text-align: right; }
 .debitur-table th.th-status { width: 140px; }
+.debitur-table th.th-tagging,
+.debitur-table th.th-tanggal { width: 215px; }
 
 /* Table Rows & Cells */
 .debitur-table td {
@@ -644,9 +646,22 @@ body.powerbi-theme {
   font-weight: 600;
 }
 
+.debitur-table td.cell-tagging-terdata {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.debitur-table td.cell-tagging-tidak {
+  color: #cbd5e1;
+}
+
 .debitur-table td.td-right {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.debitur-table td.td-center {
+  text-align: center;
 }
 
 /* ==========================================================================

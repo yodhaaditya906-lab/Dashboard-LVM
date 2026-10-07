@@ -33,7 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     rekening: null,
     transaksi: null,
     salesVolume: null,
-    status: null
+    status: null,
+    tagging: null,
+    tanggal: null
   };
 
   const columnSort = {
@@ -52,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (colKey === 'transaksi') return (d.transaksi || 0).toLocaleString('id-ID');
     if (colKey === 'salesVolume') return (d.salesVolume || 0).toLocaleString('id-ID');
     if (colKey === 'status') return d.status || '-';
+    if (colKey === 'tagging' || colKey === 'tanggal') return d.tagging || d.tanggal || '-';
     return '';
   }
 
@@ -59,6 +62,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (colKey === 'transaksi') return d.transaksi || 0;
     if (colKey === 'salesVolume') return d.salesVolume || 0;
     return 0;
+  }
+
+  const indoMonthMap = {
+    'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'mei': 4, 'may': 4, 'jun': 5,
+    'jul': 6, 'agu': 7, 'agt': 7, 'aug': 7, 'sep': 8, 'okt': 9, 'oct': 9,
+    'nov': 10, 'des': 11, 'dec': 11
+  };
+
+  function parseFlexibleDate(s) {
+    if (!s || s === '-' || typeof s !== 'string') return 0;
+    const str = s.trim();
+    const slashParts = str.split(/[\/\-]/);
+    if (slashParts.length === 3) {
+      if (slashParts[0].length === 4) {
+        return new Date(parseInt(slashParts[0]), parseInt(slashParts[1]) - 1, parseInt(slashParts[2])).getTime() || 0;
+      }
+      return new Date(parseInt(slashParts[2]), parseInt(slashParts[1]) - 1, parseInt(slashParts[0])).getTime() || 0;
+    }
+    const spaceParts = str.split(/\s+/);
+    if (spaceParts.length === 3) {
+      const day = parseInt(spaceParts[0], 10);
+      const mStr = spaceParts[1].substring(0, 3).toLowerCase();
+      const month = indoMonthMap[mStr] !== undefined ? indoMonthMap[mStr] : 0;
+      const year = parseInt(spaceParts[2], 10);
+      return new Date(year, month, day).getTime() || 0;
+    }
+    return Date.parse(str) || 0;
   }
 
   // UI Elements
@@ -248,7 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
                (d.cif && d.cif.toLowerCase().includes(tableSearchQuery)) ||
                (d.rekening && d.rekening.toLowerCase().includes(tableSearchQuery)) ||
                (d.kodeUnit && d.kodeUnit.toLowerCase().includes(tableSearchQuery)) ||
-               (d.status && d.status.toLowerCase().includes(tableSearchQuery));
+               (d.status && d.status.toLowerCase().includes(tableSearchQuery)) ||
+               (d.tagging && d.tagging.toLowerCase().includes(tableSearchQuery)) ||
+               (d.tanggal && d.tanggal.toLowerCase().includes(tableSearchQuery));
       });
     }
 
@@ -273,6 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const valA = getRowColNumericValue(a, colKey);
           const valB = getRowColNumericValue(b, colKey);
           return isAsc ? valA - valB : valB - valA;
+        } else if (colKey === 'tanggal') {
+          const dateA = parseFlexibleDate(a.tanggal);
+          const dateB = parseFlexibleDate(b.tanggal);
+          return isAsc ? dateA - dateB : dateB - dateA;
         } else {
           const strA = getRowColValue(a, colKey);
           const strB = getRowColValue(b, colKey);
@@ -323,6 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const debText = d.debitur || '-';
       const rekText = d.rekening || '-';
       const stText = d.status || '-';
+      const tagText = d.tagging || d.tanggal || '-';
+      const tagClass = tagText.toLowerCase().includes('terdata') ? 'cell-tagging-terdata' : 'cell-tagging-tidak';
 
       rowsHtml.push(`
         <tr class="${d.rowStyle || 'row-dark'}">
@@ -334,6 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="td-right">${(d.transaksi || 0).toLocaleString('id-ID')}</td>
           <td class="td-right">${(d.salesVolume || 0).toLocaleString('id-ID')}</td>
           <td class="cell-cyan-text" title="${escapeAttr(stText)}">${stText}</td>
+          <td class="${tagClass}" title="${escapeAttr(tagText)}">${tagText}</td>
         </tr>
       `);
     }
@@ -341,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isCapped) {
       rowsHtml.push(`
         <tr class="row-dark">
-          <td colspan="8" style="text-align: center; padding: 10px; color: #38bdf8;">
+          <td colspan="9" style="text-align: center; padding: 10px; color: #38bdf8;">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
               <span>Menampilkan <strong>${renderLimit.toLocaleString('id-ID')}</strong> dari <strong>${totalCount.toLocaleString('id-ID')}</strong> debitur (${selectedMonth.toUpperCase()}).</span>
               <button id="btn-load-more-debitur" style="background: #0284c7; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 12px; margin-top: 2px;">
@@ -959,7 +998,9 @@ document.addEventListener('DOMContentLoaded', () => {
                (d.cif && d.cif.toLowerCase().includes(tableSearchQuery)) ||
                (d.rekening && d.rekening.toLowerCase().includes(tableSearchQuery)) ||
                (d.kodeUnit && d.kodeUnit.toLowerCase().includes(tableSearchQuery)) ||
-               (d.status && d.status.toLowerCase().includes(tableSearchQuery));
+               (d.status && d.status.toLowerCase().includes(tableSearchQuery)) ||
+               (d.tagging && d.tagging.toLowerCase().includes(tableSearchQuery)) ||
+               (d.tanggal && d.tanggal.toLowerCase().includes(tableSearchQuery));
       });
     }
 
@@ -984,12 +1025,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const numB = parseInt(b.replace(/\./g, '')) || 0;
         return numB - numA;
       }
+      if (colKey === 'tanggal') {
+        return parseFlexibleDate(b) - parseFlexibleDate(a);
+      }
       return a.localeCompare(b);
     });
 
     const isNumeric = (colKey === 'transaksi' || colKey === 'salesVolume');
-    const sortAscLabel = isNumeric ? '🔼 Urutkan Terkecil ke Terbesar' : '🔼 Urutkan A ke Z';
-    const sortDescLabel = isNumeric ? '🔽 Urutkan Terbesar ke Terkecil' : '🔽 Urutkan Z ke A';
+    const isDate = (colKey === 'tanggal');
+    const sortAscLabel = isNumeric ? '🔼 Urutkan Terkecil ke Terbesar' : (isDate ? '🔼 Urutkan Tanggal Terlama ke Terbaru' : '🔼 Urutkan A ke Z');
+    const sortDescLabel = isNumeric ? '🔽 Urutkan Terbesar ke Terkecil' : (isDate ? '🔽 Urutkan Tanggal Terbaru ke Terlama' : '🔽 Urutkan Z ke A');
 
     const currentSort = (columnSort.colKey === colKey) ? columnSort.direction : null;
     const currentFilterSet = columnFilters[colKey];
@@ -1560,7 +1605,9 @@ document.addEventListener('DOMContentLoaded', () => {
                  (d.cif && d.cif.toLowerCase().includes(tableSearchQuery)) ||
                  (d.rekening && d.rekening.toLowerCase().includes(tableSearchQuery)) ||
                  (d.kodeUnit && d.kodeUnit.toLowerCase().includes(tableSearchQuery)) ||
-                 (d.status && d.status.toLowerCase().includes(tableSearchQuery));
+                 (d.status && d.status.toLowerCase().includes(tableSearchQuery)) ||
+                 (d.tagging && d.tagging.toLowerCase().includes(tableSearchQuery)) ||
+                 (d.tanggal && d.tanggal.toLowerCase().includes(tableSearchQuery));
         });
       }
 
@@ -1790,12 +1837,13 @@ document.addEventListener('DOMContentLoaded', () => {
           { key: 'rekening', width: 18 },
           { key: 'transaksi', width: 14 },
           { key: 'salesVolume', width: 18 },
-          { key: 'status', width: 20 }
+          { key: 'status', width: 20 },
+          { key: 'tagging', width: 26 }
         ];
 
         const debHeader = ws2.getRow(1);
         debHeader.height = 28;
-        const debCols = ['No', 'Nama SGP', 'CIF', 'Nama Debitur', 'Rekening', 'Transaksi', 'Sales Volume', 'Status'];
+        const debCols = ['No', 'Nama SGP', 'CIF', 'Nama Debitur', 'Rekening', 'Transaksi', 'Sales Volume', 'Status', 'Tagging'];
         debCols.forEach((h, i) => {
           const cell = debHeader.getCell(i + 1);
           cell.value = h;
@@ -1824,8 +1872,9 @@ document.addEventListener('DOMContentLoaded', () => {
           r.getCell(6).value = d.transaksi || 0; r.getCell(6).numFmt = '#,##0'; r.getCell(6).alignment = { vertical: 'middle', horizontal: 'right' };
           r.getCell(7).value = d.salesVolume || 0; r.getCell(7).numFmt = '#,##0'; r.getCell(7).alignment = { vertical: 'middle', horizontal: 'right' };
           r.getCell(8).value = d.status || '-'; r.getCell(8).alignment = { vertical: 'middle', horizontal: 'center' };
+          r.getCell(9).value = d.tagging || d.tanggal || '-'; r.getCell(9).alignment = { vertical: 'middle', horizontal: 'center' };
 
-          for (let c = 1; c <= 8; c++) {
+          for (let c = 1; c <= 9; c++) {
             const cell = r.getCell(c);
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
             cell.font = { name: 'Segoe UI', size: 10, color: { argb: 'FF1E293B' } };
@@ -1876,12 +1925,12 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryData.push(["TOTAL OVERALL", "", rankTotal]);
 
       const debiturAoa = [
-        ["No", "Nama SGP", "CIF", "Nama Debitur", "Rekening", "Transaksi", "Sales Volume", "Status"]
+        ["No", "Nama SGP", "CIF", "Nama Debitur", "Rekening", "Transaksi", "Sales Volume", "Status", "Tagging"]
       ];
       filteredDebitur.forEach((d, i) => {
         debiturAoa.push([
           i + 1, d.sgp || '-', d.cif || '-', d.debitur || '-', d.rekening || '-',
-          d.transaksi || 0, d.salesVolume || 0, d.status || '-'
+          d.transaksi || 0, d.salesVolume || 0, d.status || '-', d.tagging || d.tanggal || '-'
         ]);
       });
 
