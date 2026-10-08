@@ -16,11 +16,16 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <!-- Chart.js for High-Resolution Visual Chart Generation -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- html2pdf for Executive PDF Report Generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- html2pdf for Executive PDF Report Generation (Local first, CDN fallback) -->
+  <script src="html2pdf.bundle.min.js"></script>
+  <script>
+    if (!window.html2pdf) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
+    }
+  </script>
 
   <!-- Custom PowerBI Desktop Replica CSS -->
-  <link rel="stylesheet" href="styles.css?v=2.2">
+  <link rel="stylesheet" href="styles.css?v=2.8">
 </head>
 <body class="powerbi-theme">
 
@@ -56,14 +61,16 @@
             <thead>
               <tr>
                 <th rowspan="2" class="th-sgp-name active-blue-border">Nama SGP</th>
-                <th colspan="2" class="th-usak-genuine">USAK Genuine</th>
-                <th colspan="2" class="th-ureg">UREG</th>
+                <th colspan="3" class="th-usak-genuine">USAK Genuine</th>
+                <th colspan="3" class="th-ureg">UREG</th>
               </tr>
               <tr>
                 <th class="th-month">Agustus</th>
                 <th class="th-month">September</th>
+                <th class="th-month">Oktober</th>
                 <th class="th-month">Agustus</th>
                 <th class="th-month">September</th>
+                <th class="th-month">Oktober</th>
               </tr>
             </thead>
             <tbody id="sgp-summary-tbody">
@@ -74,8 +81,10 @@
                 <td class="td-total-label">Total</td>
                 <td class="td-center td-total-val" id="sgp-total-agustus">0</td>
                 <td class="td-center td-total-val" id="sgp-total-september">0</td>
+                <td class="td-center td-total-val" id="sgp-total-oktober">0</td>
                 <td class="td-center td-total-val" id="sgp-total-ureg-agustus">0</td>
                 <td class="td-center td-total-val" id="sgp-total-ureg-september">0</td>
+                <td class="td-center td-total-val" id="sgp-total-ureg-oktober">0</td>
               </tr>
             </tfoot>
           </table>
@@ -113,7 +122,8 @@
         <div class="table-title">Detail Debitur Monitoring</div>
         <div class="month-select-wrapper">
           <select id="month-select" class="month-select" title="Pilih Bulan Monitoring">
-            <option value="september" selected>Bulan September</option>
+            <option value="oktober" selected>Bulan Oktober</option>
+            <option value="september">Bulan September</option>
             <option value="agustus">Bulan Agustus</option>
           </select>
         </div>
@@ -217,45 +227,96 @@
         </div>
       </div>
 
-      <!-- USAK Comparison Card (Lower Right / Samping Daftar Peringkat) -->
-      <div class="usak-comparison-card">
-        <div class="usak-chart-header">
-          <div class="usak-chart-title-group">
-            <div>
-              <div class="usak-chart-title">Perbandingan USAK Genuine</div>
-              <div class="usak-chart-subtitle" id="usak-chart-subtitle">Agustus vs September • Semua Unit</div>
+      <!-- VISUAL INSIGHTS (BAR SGP COMPARISON & DEBITUR COMPOSITION DONUT) -->
+      <div class="charts-insights-container">
+
+        <!-- 1. Chart Perbandingan (Agustus vs September) per SGP -->
+        <div class="insight-chart-card sgp-chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-main-title">Perbandingan USAK Genuine</div>
+              <div class="chart-subtitle" id="sgp-chart-subtitle">Agustus vs September • Kenaikan/Penurunan per SGP</div>
+            </div>
+            <div class="chart-header-badges">
+              <div class="chart-badge badge-agustus">
+                <span class="badge-dot dot-agustus"></span>
+                <span class="badge-label" id="sgp-badge-lbl-prev">Sep:</span>
+                <strong id="sgp-badge-val-agt">0</strong>
+              </div>
+              <div class="chart-badge badge-september">
+                <span class="badge-dot dot-september"></span>
+                <span class="badge-label" id="sgp-badge-lbl-curr">Okt:</span>
+                <strong id="sgp-badge-val-sep">0</strong>
+              </div>
+              <span class="badge-growth" id="sgp-badge-growth-chip">
+                <span id="sgp-badge-growth-val">+0</span>
+              </span>
             </div>
           </div>
-          <div class="usak-chart-badges">
-            <div class="usak-badge badge-agustus">
-              <span class="badge-dot dot-agustus"></span>
-              <span class="badge-label">Agustus:</span>
-              <strong id="badge-val-agt">0</strong>
+          <div class="chart-canvas-container sgp-canvas-container">
+            <canvas id="sgp-comparison-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- 2. Chart Komposisi Debitur: Donut Chart Rasio USAK vs UREG vs Non UREG -->
+        <div class="insight-chart-card composition-donut-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-main-title">Komposisi Debitur</div>
+              <div class="chart-subtitle" id="donut-chart-subtitle">Rasio USAK, UREG & Non UREG</div>
             </div>
-            <div class="usak-badge badge-september">
-              <span class="badge-dot dot-september"></span>
-              <span class="badge-label">September:</span>
-              <strong id="badge-val-sep">0</strong>
+            <div class="chart-header-badges">
+              <div class="chart-badge badge-total">
+                <span class="badge-label">Total:</span>
+                <strong id="donut-badge-val-total">0</strong>
+              </div>
             </div>
-            <div class="usak-badge badge-oktober" id="badge-oktober-box" style="display: none;">
-              <span class="badge-dot dot-oktober"></span>
-              <span class="badge-label">Oktober:</span>
-              <strong id="badge-val-okt">0</strong>
+          </div>
+          <div class="donut-card-content">
+            <div class="donut-canvas-container">
+              <canvas id="debtor-composition-chart"></canvas>
             </div>
-            <div class="usak-badge badge-growth" id="badge-growth-chip">
-              <span id="badge-growth-val">+0</span>
+            <div class="donut-stats-panel">
+              <div class="donut-stat-item stat-usak">
+                <div class="donut-stat-header">
+                  <span class="donut-legend-dot dot-usak"></span>
+                  <span class="donut-stat-label">USAK</span>
+                </div>
+                <div class="donut-stat-values">
+                  <strong class="donut-stat-count" id="donut-stat-count-usak">0</strong>
+                  <span class="donut-stat-pct" id="donut-stat-pct-usak">0%</span>
+                </div>
+              </div>
+              <div class="donut-stat-item stat-ureg">
+                <div class="donut-stat-header">
+                  <span class="donut-legend-dot dot-ureg"></span>
+                  <span class="donut-stat-label">UREG</span>
+                </div>
+                <div class="donut-stat-values">
+                  <strong class="donut-stat-count" id="donut-stat-count-ureg">0</strong>
+                  <span class="donut-stat-pct" id="donut-stat-pct-ureg">0%</span>
+                </div>
+              </div>
+              <div class="donut-stat-item stat-non-ureg">
+                <div class="donut-stat-header">
+                  <span class="donut-legend-dot dot-non-ureg"></span>
+                  <span class="donut-stat-label">Non UREG</span>
+                </div>
+                <div class="donut-stat-values">
+                  <strong class="donut-stat-count" id="donut-stat-count-non-ureg">0</strong>
+                  <span class="donut-stat-pct" id="donut-stat-pct-non-ureg">0%</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="usak-chart-container">
-          <canvas id="dashboard-usak-chart"></canvas>
-        </div>
+
       </div>
 
     </div>
 
   </div>
 
-  <script src="app.js?v=2.2"></script>
+  <script src="app.js?v=3.2"></script>
 </body>
 </html>

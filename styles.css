@@ -675,11 +675,17 @@ body.powerbi-theme {
 }
 
 /* ==========================================================================
-   USAK COMPARISON CHART CARD (LOWER RIGHT)
+   CHARTS & VISUAL INSIGHTS (SGP BAR COMPARISON & DEBTOR DONUT COMPOSITION)
    ========================================================================== */
-.usak-comparison-card {
+.charts-insights-container {
   flex: 1;
   min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.insight-chart-card {
   background: linear-gradient(145deg, #0b1426, #0e1b38);
   border: 1px solid #1e3a6a;
   border-radius: 6px;
@@ -690,96 +696,219 @@ body.powerbi-theme {
   box-sizing: border-box;
 }
 
-.usak-chart-header {
+.sgp-chart-card {
+  flex: 1.55;
+  min-width: 0;
+}
+
+.composition-donut-card {
+  flex: 1.05;
+  min-width: 0;
+}
+
+.chart-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
-.usak-chart-title-group {
+.chart-title-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.usak-chart-icon {
-  font-size: 20px;
-}
-
-.usak-chart-title {
+.chart-main-title {
   color: #f8fafc;
   font-weight: 700;
   font-size: 13.5px;
   letter-spacing: 0.3px;
 }
 
-.usak-chart-subtitle {
+.chart-subtitle {
   color: #94a3b8;
   font-size: 11px;
 }
 
-.usak-chart-badges {
+.chart-header-badges {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.usak-badge {
+.chart-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 4px;
+  gap: 5px;
+  padding: 0 2px;
+  border-radius: 0;
   font-size: 11.5px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
   color: #e2e8f0;
 }
 
 .badge-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 9.5px;
+  height: 9.5px;
+  border-radius: 2px;
   display: inline-block;
+  vertical-align: middle;
 }
 
 .dot-agustus {
   background-color: #38bdf8;
-  box-shadow: 0 0 6px #38bdf8;
+  box-shadow: none;
 }
 
 .dot-september {
   background-color: #ef4444;
-  box-shadow: 0 0 6px #ef4444;
-}
-
-.dot-oktober {
-  background-color: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  box-shadow: none;
 }
 
 .badge-growth {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.3);
+  background: transparent !important;
+  border: none !important;
+  padding: 0 4px !important;
   color: #34d399;
   font-weight: 700;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: none !important;
 }
 
 .badge-growth.negative {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: transparent !important;
+  border: none !important;
+  padding: 0 4px !important;
   color: #f87171;
 }
 
-.usak-chart-container {
+.sgp-canvas-container {
   flex: 1;
   position: relative;
-  min-height: 220px;
-  max-height: 250px;
+  min-height: 215px;
+  max-height: 245px;
   width: 100%;
+}
+
+/* Donut Chart Layout */
+.donut-card-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 215px;
+}
+
+.donut-canvas-container {
+  flex: 1;
+  min-width: 125px;
+  height: 195px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-stats-panel {
+  width: 140px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  justify-content: center;
+}
+
+.donut-stat-item {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.donut-stat-item.stat-usak {
+  border-left: 3px solid #38bdf8;
+}
+
+.donut-stat-item.stat-ureg {
+  border-left: 3px solid #f59e0b;
+}
+
+.donut-stat-item.stat-non-ureg {
+  border-left: 3px solid #94a3b8;
+}
+
+.donut-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.donut-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dot-usak {
+  background-color: #38bdf8;
+  box-shadow: none;
+}
+
+.dot-ureg {
+  background-color: #f59e0b;
+  box-shadow: none;
+}
+
+.dot-non-ureg {
+  background-color: #94a3b8;
+  box-shadow: none;
+}
+
+.donut-stat-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.donut-stat-values {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding-left: 12px;
+}
+
+.donut-stat-count {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.donut-stat-pct {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.stat-ureg .donut-stat-pct {
+  color: #f59e0b;
+}
+
+.stat-non-ureg .donut-stat-pct {
+  color: #cbd5e1;
 }
 
 /* Yellow Leaderboard Container */
@@ -787,7 +916,7 @@ body.powerbi-theme {
   background-color: #d4af37; /* Warm Gold Yellow */
   border: 3px solid #cca000;
   border-radius: 4px;
-  width: 440px;
+  width: 375px;
   flex-shrink: 0;
   box-shadow: 0 6px 20px rgba(0,0,0,0.7);
   overflow: hidden;
@@ -1434,14 +1563,20 @@ body.powerbi-theme {
     gap: 12px;
   }
 
-  .usak-comparison-card {
+  .charts-insights-container {
     width: 100%;
     order: -1; /* Muncul langsung di atas leaderboard agar segera terlihat di HP */
+    flex-direction: column;
   }
 
-  .usak-chart-container {
+  .sgp-canvas-container {
     height: 240px;
     min-height: 220px;
+  }
+
+  .donut-card-content {
+    flex-direction: row;
+    gap: 14px;
   }
 
   .leaderboard-card-yellow {
@@ -1467,15 +1602,29 @@ body.powerbi-theme {
     justify-content: center;
   }
 
-  .usak-chart-header {
+  .chart-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
   }
 
-  .usak-chart-badges {
+  .chart-header-badges {
     flex-wrap: wrap;
     gap: 6px;
+  }
+
+  .donut-card-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .donut-stats-panel {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .donut-stat-item {
+    flex: 1;
   }
 
   .modal-card {

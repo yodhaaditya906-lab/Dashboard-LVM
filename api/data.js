@@ -69,6 +69,11 @@ function parseCsv(csvText) {
   return rows;
 }
 
+function isUsak(statusStr) {
+  if (!statusStr) return false;
+  return String(statusStr).trim().toUpperCase().includes('USAK');
+}
+
 function isUsakGenuine(statusStr) {
   if (!statusStr) return false;
   const upper = statusStr.trim().toUpperCase();
@@ -79,9 +84,15 @@ function isUsakGenuine(statusStr) {
 function isUreg(statusStr) {
   if (!statusStr) return false;
   const upper = statusStr.trim().toUpperCase();
-  if (upper.includes('NON')) return false;
-  if (isUsakGenuine(statusStr)) return false;
-  return true;
+  if (upper.includes('NON UREG') || upper.includes('NON-UREG')) return false;
+  if (upper.includes('USAK')) return false;
+  return upper.includes('PRIORITAS') || upper.includes('UREG');
+}
+
+function isNonUreg(statusStr) {
+  if (!statusStr) return false;
+  const upper = statusStr.trim().toUpperCase();
+  return upper.includes('NON UREG') || upper.includes('NON-UREG');
 }
 
 const INDO_MONTH_NAMES = [
@@ -122,8 +133,10 @@ function processRawCsv(csvText, monthContext = '') {
   const unitList = [];
   const addedUnits = new Set();
 
+  let usakCount = 0;
   let genuineCount = 0;
   let uregCount = 0;
+  let nonUregCount = 0;
 
   let currentKodeUnit = '';
   let currentNamaMka = '';
@@ -182,9 +195,15 @@ function processRawCsv(csvText, monthContext = '') {
       }
     }
 
+    const isUsakDebitur = isUsak(status);
     const isGenuine = isUsakGenuine(status);
+    const isUregDebitur = isUreg(status);
+    const isNonUregDebitur = isNonUreg(status);
+
+    if (isUsakDebitur) usakCount++;
     if (isGenuine) genuineCount++;
-    if (isUreg(status)) uregCount++;
+    if (isUregDebitur) uregCount++;
+    if (isNonUregDebitur) nonUregCount++;
 
     let rowStyle = 'row-dark';
     if (debiturData.length % 3 === 1) rowStyle = 'row-dark-blue';
@@ -203,7 +222,10 @@ function processRawCsv(csvText, monthContext = '') {
       status,
       tagging,
       tanggal: tagging,
+      isUsak: isUsakDebitur,
       isGenuine,
+      isUreg: isUregDebitur,
+      isNonUreg: isNonUregDebitur,
       rowStyle
     });
 
@@ -238,8 +260,11 @@ function processRawCsv(csvText, monthContext = '') {
     mkaRanks,
     unitList,
     kodeUnitToMkaMap,
+    totalUsak: usakCount,
     totalUsakGenuine: genuineCount,
-    totalUreg: uregCount
+    totalUreg: uregCount,
+    totalNonUreg: nonUregCount,
+    totalDebitur: debiturData.length
   };
 }
 
@@ -329,27 +354,35 @@ function buildPayload(parsedSeptember, parsedAgustus, parsedOktober = null) {
     // September
     debiturDataSeptember: parsedSeptember ? parsedSeptember.debiturData : [],
     mkaRanksSeptember: parsedSeptember ? parsedSeptember.mkaRanks : [],
+    totalUsakSeptember: parsedSeptember ? parsedSeptember.totalUsak : 0,
     totalUsakGenuineSeptember: parsedSeptember ? parsedSeptember.totalUsakGenuine : 0,
     totalUregSeptember: parsedSeptember ? parsedSeptember.totalUreg : 0,
+    totalNonUregSeptember: parsedSeptember ? parsedSeptember.totalNonUreg : 0,
 
     // Agustus
     debiturDataAgustus: parsedAgustus ? parsedAgustus.debiturData : [],
     mkaRanksAgustus: parsedAgustus ? parsedAgustus.mkaRanks : [],
+    totalUsakAgustus: parsedAgustus ? parsedAgustus.totalUsak : 0,
     totalUsakGenuineAgustus: parsedAgustus ? parsedAgustus.totalUsakGenuine : 0,
     totalUregAgustus: parsedAgustus ? parsedAgustus.totalUreg : 0,
+    totalNonUregAgustus: parsedAgustus ? parsedAgustus.totalNonUreg : 0,
 
     // Oktober
     debiturDataOktober: parsedOktober ? parsedOktober.debiturData : [],
     mkaRanksOktober: parsedOktober ? parsedOktober.mkaRanks : [],
+    totalUsakOktober: parsedOktober ? parsedOktober.totalUsak : 0,
     totalUsakGenuineOktober: parsedOktober ? parsedOktober.totalUsakGenuine : 0,
     totalUregOktober: parsedOktober ? parsedOktober.totalUreg : 0,
+    totalNonUregOktober: parsedOktober ? parsedOktober.totalNonUreg : 0,
     hasOktober: Boolean(parsedOktober && parsedOktober.debiturData && parsedOktober.debiturData.length > 0),
 
     // Fallbacks
     debiturData: parsedSeptember ? parsedSeptember.debiturData : [],
     mkaRanks: parsedSeptember ? parsedSeptember.mkaRanks : [],
+    totalUsak: parsedSeptember ? parsedSeptember.totalUsak : 0,
     totalUsakGenuine: parsedSeptember ? parsedSeptember.totalUsakGenuine : 0,
     totalUreg: parsedSeptember ? parsedSeptember.totalUreg : 0,
+    totalNonUreg: parsedSeptember ? parsedSeptember.totalNonUreg : 0,
 
     unitList: masterUnitList,
     kodeUnitToMkaMap
@@ -358,9 +391,10 @@ function buildPayload(parsedSeptember, parsedAgustus, parsedOktober = null) {
 
 async function fetchDualMonthData() {
   const docId = '1p7YcnAdVNSZjYZ5oyu6hUmMNkyOlfVzSErJGe84lmfc';
-  // Data Master September (gid: 1977494811) and Data Master Agustus (gid: 2105617517)
+  // Data Master September (gid: 1977494811), Data Master Agustus (gid: 2105617517), Data Master Oktober (gid: 940560773)
   const urlSeptember = `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=1977494811`;
   const urlAgustus = `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=2105617517`;
+  const urlOktober = `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=940560773`;
 
   const [csvSeptember, csvAgustus, csvOktober] = await Promise.all([
     fetchHttpsText(urlSeptember, 30000).catch(err => {
@@ -371,9 +405,10 @@ async function fetchDualMonthData() {
       console.warn('Error fetching Agustus sheet:', err.message);
       return fs.existsSync(LOCAL_CSV_AGUSTUS) ? fs.readFileSync(LOCAL_CSV_AGUSTUS, 'utf8') : '';
     }),
-    fs.existsSync(LOCAL_CSV_OKTOBER)
-      ? Promise.resolve(fs.readFileSync(LOCAL_CSV_OKTOBER, 'utf8'))
-      : Promise.resolve('')
+    fetchHttpsText(urlOktober, 30000).catch(err => {
+      console.warn('Error fetching Oktober sheet:', err.message);
+      return fs.existsSync(LOCAL_CSV_OKTOBER) ? fs.readFileSync(LOCAL_CSV_OKTOBER, 'utf8') : '';
+    })
   ]);
 
   if (csvSeptember) {
@@ -382,6 +417,9 @@ async function fetchDualMonthData() {
   }
   if (csvAgustus) {
     fs.writeFile(LOCAL_CSV_AGUSTUS, csvAgustus, 'utf8', () => {});
+  }
+  if (csvOktober) {
+    fs.writeFile(LOCAL_CSV_OKTOBER, csvOktober, 'utf8', () => {});
   }
 
   const parsedSeptember = processRawCsv(csvSeptember, 'september');
@@ -492,3 +530,5 @@ module.exports = async function handler(req, res) {
   return sendJsonResponse(res, 500, { error: 'Failed to load data' });
 };
 module.exports.processRawCsv = processRawCsv;
+module.exports.fetchDualMonthData = fetchDualMonthData;
+module.exports.buildPayload = buildPayload;
