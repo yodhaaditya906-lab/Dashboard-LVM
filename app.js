@@ -942,6 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (statsPanel) {
+        statsPanel.classList.add('panel-compare-mode');
         function renderCompItem(name, sepVal, oktVal, statClass) {
           const diff = oktVal - sepVal;
           let diffClass = 'comp-diff-zero';
@@ -1127,6 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (badgeTotal) badgeTotal.textContent = totalDebitur.toLocaleString('id-ID');
 
       if (statsPanel) {
+        statsPanel.classList.remove('panel-compare-mode');
         statsPanel.innerHTML = `
           <div class="donut-stat-item stat-usak">
             <div class="donut-stat-header">
