@@ -25,7 +25,7 @@
   </script>
 
   <!-- Custom PowerBI Desktop Replica CSS -->
-  <link rel="stylesheet" href="styles.css?v=2.8">
+  <link rel="stylesheet" href="styles.css?v=3.0">
 </head>
 <body class="powerbi-theme">
 
@@ -61,14 +61,12 @@
             <thead>
               <tr>
                 <th rowspan="2" class="th-sgp-name active-blue-border">Nama SGP</th>
-                <th colspan="3" class="th-usak-genuine">USAK Genuine</th>
-                <th colspan="3" class="th-ureg">UREG</th>
+                <th colspan="2" class="th-usak-genuine">USAK Genuine</th>
+                <th colspan="2" class="th-ureg">UREG</th>
               </tr>
               <tr>
-                <th class="th-month">Agustus</th>
                 <th class="th-month">September</th>
                 <th class="th-month">Oktober</th>
-                <th class="th-month">Agustus</th>
                 <th class="th-month">September</th>
                 <th class="th-month">Oktober</th>
               </tr>
@@ -79,10 +77,8 @@
             <tfoot id="sgp-summary-tfoot">
               <tr class="sgp-tfoot-row">
                 <td class="td-total-label">Total</td>
-                <td class="td-center td-total-val" id="sgp-total-agustus">0</td>
                 <td class="td-center td-total-val" id="sgp-total-september">0</td>
                 <td class="td-center td-total-val" id="sgp-total-oktober">0</td>
-                <td class="td-center td-total-val" id="sgp-total-ureg-agustus">0</td>
                 <td class="td-center td-total-val" id="sgp-total-ureg-september">0</td>
                 <td class="td-center td-total-val" id="sgp-total-ureg-oktober">0</td>
               </tr>
@@ -124,7 +120,6 @@
           <select id="month-select" class="month-select" title="Pilih Bulan Monitoring">
             <option value="oktober" selected>Bulan Oktober</option>
             <option value="september">Bulan September</option>
-            <option value="agustus">Bulan Agustus</option>
           </select>
         </div>
       </div>
@@ -218,9 +213,13 @@
               <!-- Rows dynamically rendered -->
             </tbody>
             <tfoot>
-              <tr>
+              <tr class="tfoot-total-row">
                 <td colspan="2">Total Overall</td>
                 <td class="total-cell" id="leaderboard-total-val">0</td>
+              </tr>
+              <tr class="tfoot-na-row" id="leaderboard-na-row" title="Klik untuk memfilter debitur #N/A (tanpa MKA)">
+                <td colspan="2">#N/A</td>
+                <td class="total-cell" id="leaderboard-na-val">0</td>
               </tr>
             </tfoot>
           </table>
@@ -230,21 +229,21 @@
       <!-- VISUAL INSIGHTS (BAR SGP COMPARISON & DEBITUR COMPOSITION DONUT) -->
       <div class="charts-insights-container">
 
-        <!-- 1. Chart Perbandingan (Agustus vs September) per SGP -->
+        <!-- 1. Chart Perbandingan (September vs Oktober) per SGP -->
         <div class="insight-chart-card sgp-chart-card">
           <div class="chart-header">
             <div class="chart-title-group">
               <div class="chart-main-title">Perbandingan USAK Genuine</div>
-              <div class="chart-subtitle" id="sgp-chart-subtitle">Agustus vs September • Kenaikan/Penurunan per SGP</div>
+              <div class="chart-subtitle" id="sgp-chart-subtitle">September vs Oktober • Kenaikan/Penurunan per SGP</div>
             </div>
             <div class="chart-header-badges">
-              <div class="chart-badge badge-agustus">
-                <span class="badge-dot dot-agustus"></span>
+              <div class="chart-badge badge-september">
+                <span class="badge-dot dot-september"></span>
                 <span class="badge-label" id="sgp-badge-lbl-prev">Sep:</span>
                 <strong id="sgp-badge-val-agt">0</strong>
               </div>
-              <div class="chart-badge badge-september">
-                <span class="badge-dot dot-september"></span>
+              <div class="chart-badge badge-oktober">
+                <span class="badge-dot dot-oktober"></span>
                 <span class="badge-label" id="sgp-badge-lbl-curr">Okt:</span>
                 <strong id="sgp-badge-val-sep">0</strong>
               </div>
@@ -258,55 +257,33 @@
           </div>
         </div>
 
-        <!-- 2. Chart Komposisi Debitur: Donut Chart Rasio USAK vs UREG vs Non UREG -->
+        <!-- 2. Chart Komposisi Debitur: Donut & Comparison Chart (Sep, Okt, Keduanya) -->
         <div class="insight-chart-card composition-donut-card">
           <div class="chart-header">
             <div class="chart-title-group">
               <div class="chart-main-title">Komposisi Debitur</div>
-              <div class="chart-subtitle" id="donut-chart-subtitle">Rasio USAK, UREG & Non UREG</div>
+              <div class="chart-subtitle" id="donut-chart-subtitle">September vs Oktober • Rasio Debitur</div>
             </div>
-            <div class="chart-header-badges">
-              <div class="chart-badge badge-total">
-                <span class="badge-label">Total:</span>
-                <strong id="donut-badge-val-total">0</strong>
+            <div class="chart-header-right">
+              <div class="composition-tab-group" id="composition-tab-group" role="tablist" title="Pilih Tampilan Komposisi Debitur">
+                <button type="button" class="comp-tab-btn" data-mode="september" id="comp-tab-sep">Sep</button>
+                <button type="button" class="comp-tab-btn" data-mode="oktober" id="comp-tab-okt">Okt</button>
+                <button type="button" class="comp-tab-btn active" data-mode="compare" id="comp-tab-compare">Keduanya</button>
+              </div>
+              <div class="chart-header-badges" id="donut-header-badges">
+                <div class="chart-badge badge-total" id="donut-badge-total-box">
+                  <span class="badge-label" id="donut-badge-lbl">Total:</span>
+                  <strong id="donut-badge-val-total">0</strong>
+                </div>
               </div>
             </div>
           </div>
           <div class="donut-card-content">
-            <div class="donut-canvas-container">
+            <div class="donut-canvas-container" id="donut-canvas-wrapper">
               <canvas id="debtor-composition-chart"></canvas>
             </div>
-            <div class="donut-stats-panel">
-              <div class="donut-stat-item stat-usak">
-                <div class="donut-stat-header">
-                  <span class="donut-legend-dot dot-usak"></span>
-                  <span class="donut-stat-label">USAK</span>
-                </div>
-                <div class="donut-stat-values">
-                  <strong class="donut-stat-count" id="donut-stat-count-usak">0</strong>
-                  <span class="donut-stat-pct" id="donut-stat-pct-usak">0%</span>
-                </div>
-              </div>
-              <div class="donut-stat-item stat-ureg">
-                <div class="donut-stat-header">
-                  <span class="donut-legend-dot dot-ureg"></span>
-                  <span class="donut-stat-label">UREG</span>
-                </div>
-                <div class="donut-stat-values">
-                  <strong class="donut-stat-count" id="donut-stat-count-ureg">0</strong>
-                  <span class="donut-stat-pct" id="donut-stat-pct-ureg">0%</span>
-                </div>
-              </div>
-              <div class="donut-stat-item stat-non-ureg">
-                <div class="donut-stat-header">
-                  <span class="donut-legend-dot dot-non-ureg"></span>
-                  <span class="donut-stat-label">Non UREG</span>
-                </div>
-                <div class="donut-stat-values">
-                  <strong class="donut-stat-count" id="donut-stat-count-non-ureg">0</strong>
-                  <span class="donut-stat-pct" id="donut-stat-pct-non-ureg">0%</span>
-                </div>
-              </div>
+            <div class="donut-stats-panel" id="donut-stats-panel">
+              <!-- Dynamically populated in app.js for both donut and comparison modes -->
             </div>
           </div>
         </div>
@@ -317,6 +294,6 @@
 
   </div>
 
-  <script src="app.js?v=3.2"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>

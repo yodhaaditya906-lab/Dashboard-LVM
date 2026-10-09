@@ -232,16 +232,25 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // Render Leaderboard (Yellow Card - Rank by Kode Unit)
+  function isNaDebitur(d) {
+    if (!d) return false;
+    const m = (d.namaMka || '').trim();
+    return !m || m === '#N/A' || m === '-' || m.toUpperCase() === 'NULL' || m.toUpperCase() === 'UNASSIGNED';
+  }
+
+  // Render Leaderboard (Yellow Card - Rank by Kode Unit / MKA)
   function renderLeaderboard() {
     const tbody = document.getElementById('leaderboard-tbody');
     if (!tbody) return;
     let totalUsak = 0;
     tbody.innerHTML = '';
 
-    const ranks = (selectedMonth === 'agustus')
-      ? masterMkaRanksAgustus
-      : (selectedMonth === 'oktober' ? masterMkaRanksOktober : masterMkaRanksSeptember);
+    const rankHeader = document.querySelector('.th-rank-name-inner span');
+    if (rankHeader) {
+      rankHeader.textContent = (selectedMonth === 'oktober') ? 'Nama MKA' : 'Kode Unit - MKA';
+    }
+
+    const ranks = (selectedMonth === 'oktober') ? masterMkaRanksOktober : masterMkaRanksSeptember;
     const activeRanks = (ranks && ranks.length > 0)
       ? ranks
       : (selectedMonth === 'oktober' ? masterMkaRanksOktober : masterMkaRanksSeptember);
@@ -250,7 +259,11 @@ document.addEventListener('DOMContentLoaded', () => {
       totalUsak += item.usakCount;
       const tr = document.createElement('tr');
 
-      const isSelected = selectedKodeUnit !== 'ALL' && selectedKodeUnit === item.kodeUnit;
+      const isSelected = selectedKodeUnit !== 'ALL' && (
+        selectedKodeUnit === item.kodeUnit ||
+        selectedKodeUnit === item.namaMka ||
+        selectedKodeUnit === item.name
+      );
 
       if (isSelected) {
         tr.className = 'rank-row-blue';
@@ -267,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       tr.addEventListener('click', () => {
-        const selectedKey = item.kodeUnit || item.name;
+        const selectedKey = (selectedMonth === 'oktober') ? (item.namaMka || item.name) : (item.kodeUnit || item.name);
         nipSelect.value = selectedKey;
         handleFilterChange(selectedKey);
       });
@@ -277,6 +290,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const totalEl = document.getElementById('leaderboard-total-val');
     if (totalEl) totalEl.textContent = totalUsak;
+
+    // Hitung USAK Genuine untuk debitur #N/A (Tanpa MKA)
+    const currentDataset = (selectedMonth === 'oktober') ? masterDebiturOktober : masterDebiturSeptember;
+
+    let naCount = 0;
+    if (currentDataset && currentDataset.length > 0) {
+      currentDataset.forEach(d => {
+        if (d.isGenuine && isNaDebitur(d)) {
+          naCount++;
+        }
+      });
+    }
+
+    const naValEl = document.getElementById('leaderboard-na-val');
+    if (naValEl) naValEl.textContent = naCount;
+
+    const naRow = document.getElementById('leaderboard-na-row');
+    if (naRow) {
+      if (selectedKodeUnit === '#N/A') {
+        naRow.classList.add('active');
+      } else {
+        naRow.classList.remove('active');
+      }
+
+      naRow.onclick = () => {
+        if (selectedKodeUnit === '#N/A') {
+          handleFilterChange('ALL');
+        } else {
+          handleFilterChange('#N/A');
+        }
+      };
+    }
   }
 
   // Render Debitur Table (8 Columns: No, Nama SGP, CIF, Nama Debitur, Rekening, Transaksi, Sales Volume, Status)
@@ -284,18 +329,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('debitur-tbody');
     if (!tbody) return;
 
-    let currentDataset = (selectedMonth === 'agustus')
-      ? masterDebiturAgustus
-      : (selectedMonth === 'oktober' ? masterDebiturOktober : masterDebiturSeptember);
+    let currentDataset = (selectedMonth === 'oktober') ? masterDebiturOktober : masterDebiturSeptember;
     if (!currentDataset || currentDataset.length === 0) {
       currentDataset = (selectedMonth === 'oktober') ? masterDebiturOktober : masterDebiturSeptember;
     }
 
     let filtered = currentDataset;
 
-    // 1. Filter by Selected Kode Unit
+    // 1. Filter by Selected Kode Unit or Nama MKA
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      filtered = filtered.filter(d => d.kodeUnit === selectedKodeUnit);
+      if (selectedKodeUnit === '#N/A') {
+        filtered = filtered.filter(d => isNaDebitur(d));
+      } else {
+        filtered = filtered.filter(d => d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit);
+      }
     }
 
     // 2. Filter by Main Search Bar
@@ -433,8 +480,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update KPI Displays if present
     const elUsak = document.getElementById('kpi-usak-val');
     const elUreg = document.getElementById('kpi-ureg-val');
-    const activeTotalUsak = (selectedMonth === 'agustus') ? totalUsakGenuineAgustus : (selectedMonth === 'oktober' ? totalUsakGenuineOktober : totalUsakGenuineSeptember);
-    const activeTotalUreg = (selectedMonth === 'agustus') ? totalUregAgustus : (selectedMonth === 'oktober' ? totalUregOktober : totalUregSeptember);
+    const activeTotalUsak = (selectedMonth === 'oktober') ? totalUsakGenuineOktober : totalUsakGenuineSeptember;
+    const activeTotalUreg = (selectedMonth === 'oktober') ? totalUregOktober : totalUregSeptember;
 
     const hasAnyActiveFilter = (selectedKodeUnit !== 'ALL' || tableSearchQuery || columnSort.colKey || Object.values(columnFilters).some(v => v !== null));
 
@@ -451,20 +498,23 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   }
 
-  // Render SGP USAK Genuine & UREG Summary Matrix Table (Agustus, September & Oktober)
+  // Render SGP USAK Genuine & UREG Summary Matrix Table (September & Oktober)
   function renderSgpSummaryTable() {
     const tbody = document.getElementById('sgp-summary-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     let filteredSep = masterDebiturSeptember;
-    let filteredAgus = masterDebiturAgustus;
     let filteredOkt = masterDebiturOktober;
 
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      filteredSep = masterDebiturSeptember.filter(d => d.kodeUnit === selectedKodeUnit);
-      filteredAgus = masterDebiturAgustus.filter(d => d.kodeUnit === selectedKodeUnit);
-      filteredOkt = masterDebiturOktober.filter(d => d.kodeUnit === selectedKodeUnit);
+      if (selectedKodeUnit === '#N/A') {
+        filteredSep = masterDebiturSeptember.filter(d => isNaDebitur(d));
+        filteredOkt = masterDebiturOktober.filter(d => isNaDebitur(d));
+      } else {
+        filteredSep = masterDebiturSeptember.filter(d => d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit);
+        filteredOkt = masterDebiturOktober.filter(d => d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit);
+      }
     }
 
     const sgpMap = {};
@@ -475,10 +525,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!sgpMap[upper]) {
         sgpMap[upper] = {
           name,
-          agustusGenuine: 0,
           septemberGenuine: 0,
           oktoberGenuine: 0,
-          agustusUreg: 0,
           septemberUreg: 0,
           oktoberUreg: 0
         };
@@ -504,15 +552,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isUregStatus(d.status)) item.septemberUreg += 1;
     });
 
-    // August Data
-    filteredAgus.forEach(d => {
-      const sgpName = (d.sgp || d.namaMka || 'UNASSIGNED').trim();
-      const item = ensureSgp(sgpName);
-      if (!item) return;
-      if (d.isGenuine) item.agustusGenuine += 1;
-      if (isUregStatus(d.status)) item.agustusUreg += 1;
-    });
-
     const sgpList = Object.values(sgpMap);
     sgpList.sort((a, b) => {
       if (b.oktoberGenuine !== a.oktoberGenuine) {
@@ -521,42 +560,33 @@ document.addEventListener('DOMContentLoaded', () => {
       if (b.septemberGenuine !== a.septemberGenuine) {
         return b.septemberGenuine - a.septemberGenuine;
       }
-      if (b.agustusGenuine !== a.agustusGenuine) {
-        return b.agustusGenuine - a.agustusGenuine;
-      }
       if (b.oktoberUreg !== a.oktoberUreg) {
         return b.oktoberUreg - a.oktoberUreg;
       }
       return a.name.localeCompare(b.name);
     });
 
-    let sumAgustusGenuine = 0;
     let sumSeptemberGenuine = 0;
     let sumOktoberGenuine = 0;
-    let sumAgustusUreg = 0;
     let sumSeptemberUreg = 0;
     let sumOktoberUreg = 0;
 
     if (sgpList.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="7" class="td-center" style="color: #666; font-style: italic;">Tidak ada SGP dengan USAK Genuine / UREG</td>`;
+      tr.innerHTML = `<td colspan="5" class="td-center" style="color: #666; font-style: italic;">Tidak ada SGP dengan USAK Genuine / UREG</td>`;
       tbody.appendChild(tr);
     } else {
       sgpList.forEach(item => {
-        sumAgustusGenuine += item.agustusGenuine;
         sumSeptemberGenuine += item.septemberGenuine;
         sumOktoberGenuine += item.oktoberGenuine;
-        sumAgustusUreg += item.agustusUreg;
         sumSeptemberUreg += item.septemberUreg;
         sumOktoberUreg += item.oktoberUreg;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td title="${escapeAttr(item.name)}">${item.name}</td>
-          <td class="td-center">${item.agustusGenuine}</td>
           <td class="td-center">${item.septemberGenuine}</td>
           <td class="td-center">${item.oktoberGenuine}</td>
-          <td class="td-center">${item.agustusUreg}</td>
           <td class="td-center">${item.septemberUreg}</td>
           <td class="td-center">${item.oktoberUreg}</td>
         `;
@@ -564,17 +594,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    const elAgustusTotal = document.getElementById('sgp-total-agustus');
     const elSeptemberTotal = document.getElementById('sgp-total-september');
     const elOktoberTotal = document.getElementById('sgp-total-oktober');
-    const elUregAgustusTotal = document.getElementById('sgp-total-ureg-agustus');
     const elUregSeptemberTotal = document.getElementById('sgp-total-ureg-september');
     const elUregOktoberTotal = document.getElementById('sgp-total-ureg-oktober');
 
-    if (elAgustusTotal) elAgustusTotal.textContent = sumAgustusGenuine;
     if (elSeptemberTotal) elSeptemberTotal.textContent = sumSeptemberGenuine;
     if (elOktoberTotal) elOktoberTotal.textContent = sumOktoberGenuine;
-    if (elUregAgustusTotal) elUregAgustusTotal.textContent = sumAgustusUreg;
     if (elUregSeptemberTotal) elUregSeptemberTotal.textContent = sumSeptemberUreg;
     if (elUregOktoberTotal) elUregOktoberTotal.textContent = sumOktoberUreg;
   }
@@ -594,18 +620,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!window.Chart) return;
 
-    let filteredCurr = (selectedMonth === 'oktober') ? masterDebiturOktober : (selectedMonth === 'agustus' ? masterDebiturAgustus : masterDebiturSeptember);
-    let filteredPrev = (selectedMonth === 'oktober') ? masterDebiturSeptember : masterDebiturAgustus;
-    let prevName = (selectedMonth === 'oktober') ? 'September' : 'Agustus';
-    let currName = (selectedMonth === 'oktober') ? 'Oktober' : (selectedMonth === 'agustus' ? 'Agustus' : 'September');
-    let prevShort = (selectedMonth === 'oktober') ? 'Sep' : 'Agt';
-    let currShort = (selectedMonth === 'oktober') ? 'Okt' : (selectedMonth === 'agustus' ? 'Agt' : 'Sep');
+    let filteredCurr = masterDebiturOktober;
+    let filteredPrev = masterDebiturSeptember;
+    let prevName = 'September';
+    let currName = 'Oktober';
+    let prevShort = 'Sep';
+    let currShort = 'Okt';
     let unitLabel = 'Semua Unit';
 
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      filteredCurr = filteredCurr.filter(d => d.kodeUnit === selectedKodeUnit);
-      filteredPrev = filteredPrev.filter(d => d.kodeUnit === selectedKodeUnit);
-      unitLabel = resolveKodeUnitName(selectedKodeUnit);
+      if (selectedKodeUnit === '#N/A') {
+        filteredCurr = filteredCurr.filter(d => isNaDebitur(d));
+        filteredPrev = filteredPrev.filter(d => isNaDebitur(d));
+        unitLabel = '#N/A (Tanpa MKA)';
+      } else {
+        filteredCurr = filteredCurr.filter(d => d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit);
+        filteredPrev = filteredPrev.filter(d => d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit);
+        unitLabel = resolveKodeUnitName(selectedKodeUnit);
+      }
     }
 
     // Agregasi USAK Genuine per SGP
@@ -637,12 +669,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let sgpList = Object.values(sgpMap).filter(item => item.currGenuine > 0 || item.prevGenuine > 0);
 
-    // Urutkan berdasarkan current Genuine terbanyak, lalu previous
+    // Urutkan berdasarkan nilai tertinggi dari kedua bulan (agar SGP yang menonjol di Sep atau Okt sama-sama terwakili)
     sgpList.sort((a, b) => {
-      if (b.currGenuine !== a.currGenuine) {
-        return b.currGenuine - a.currGenuine;
-      }
-      return b.prevGenuine - a.prevGenuine;
+      const maxB = Math.max(b.currGenuine, b.prevGenuine);
+      const maxA = Math.max(a.currGenuine, a.prevGenuine);
+      if (maxB !== maxA) return maxB - maxA;
+      return (b.currGenuine + b.prevGenuine) - (a.currGenuine + a.prevGenuine);
     });
 
     // Total Overall untuk Badges Header
@@ -652,8 +684,8 @@ document.addEventListener('DOMContentLoaded', () => {
       totalPrevVal = filteredPrev.filter(d => d.isGenuine).length;
       totalCurrVal = filteredCurr.filter(d => d.isGenuine).length;
     } else {
-      totalPrevVal = (selectedMonth === 'oktober') ? totalUsakGenuineSeptember : totalUsakGenuineAgustus;
-      totalCurrVal = (selectedMonth === 'oktober') ? totalUsakGenuineOktober : (selectedMonth === 'agustus' ? totalUsakGenuineAgustus : totalUsakGenuineSeptember);
+      totalPrevVal = totalUsakGenuineSeptember;
+      totalCurrVal = totalUsakGenuineOktober;
     }
 
     const totalDelta = totalCurrVal - totalPrevVal;
@@ -717,7 +749,8 @@ document.addEventListener('DOMContentLoaded', () => {
             borderWidth: 1.2,
             borderRadius: 4,
             barPercentage: 0.8,
-            categoryPercentage: 0.72
+            categoryPercentage: 0.72,
+            minBarLength: 2
           },
           {
             label: currName,
@@ -727,7 +760,8 @@ document.addEventListener('DOMContentLoaded', () => {
             borderWidth: 1.2,
             borderRadius: 4,
             barPercentage: 0.8,
-            categoryPercentage: 0.72
+            categoryPercentage: 0.72,
+            minBarLength: 2
           }
         ]
       },
@@ -774,8 +808,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const idx = items[0].dataIndex;
                 const item = chartItems[idx];
                 if (!item) return '';
-                const diff = item.septemberGenuine - item.agustusGenuine;
-                const pct = item.agustusGenuine > 0 ? ((diff / item.agustusGenuine) * 100).toFixed(1) : (diff > 0 ? '+100' : '0');
+                const diff = item.currGenuine - item.prevGenuine;
+                const pct = item.prevGenuine > 0 ? ((diff / item.prevGenuine) * 100).toFixed(1) : (diff > 0 ? '+100' : '0');
                 const sign = diff >= 0 ? '+' : '';
                 const arrow = diff >= 0 ? '▲' : '▼';
                 return `\n${arrow} Pertumbuhan: ${sign}${diff} debitur (${sign}${pct}%)`;
@@ -824,15 +858,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!meta || meta.hidden) return;
             meta.data.forEach((bar, idx) => {
               const val = dataset.data[idx];
-              if (typeof val === 'number' && val > 0) {
+              if (typeof val === 'number') {
                 ctx.save();
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 9.5px "Segoe UI", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-                ctx.shadowBlur = 3;
-                ctx.fillText(val.toString(), bar.x, bar.y - 3);
+                if (val > 0) {
+                  ctx.fillStyle = '#ffffff';
+                  ctx.font = 'bold 9.5px "Segoe UI", sans-serif';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'bottom';
+                  ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+                  ctx.shadowBlur = 3;
+                  ctx.fillText(val.toString(), bar.x, bar.y - 3);
+                } else {
+                  // Label angka 0 dengan warna dataset agar terlihat jelas bahwa nilainya nol (bukan hilang)
+                  ctx.fillStyle = datasetIdx === 0 ? '#38bdf8' : '#f87171';
+                  ctx.font = 'bold 8.5px "Segoe UI", sans-serif';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'bottom';
+                  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                  ctx.shadowBlur = 2;
+                  const baseY = (bar.base || bar.y) - 4;
+                  ctx.fillText('0', bar.x, baseY);
+                }
                 ctx.restore();
               }
             });
@@ -842,7 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. CHART KOMPOSISI DEBITUR: DONUT CHART RASIO USAK vs UREG vs NON UREG
+  // 2. CHART KOMPOSISI DEBITUR: MULTI-MODE (SEP | OKT | KEDUANYA)
+  let compositionChartMode = 'compare'; // 'compare' | 'september' | 'oktober'
+
   function renderDebtorCompositionDonutChart() {
     const canvas = document.getElementById('debtor-composition-chart');
     if (!canvas) return;
@@ -854,125 +902,332 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!window.Chart) return;
 
-    const activeMonth = selectedMonth || 'september';
-    const monthName = activeMonth === 'agustus' ? 'Agustus' : (activeMonth === 'oktober' ? 'Oktober' : 'September');
+    function getCounts(rawList) {
+      let usak = 0, ureg = 0, nonUreg = 0;
+      const filtered = (selectedKodeUnit && selectedKodeUnit !== 'ALL')
+        ? (rawList || []).filter(d => selectedKodeUnit === '#N/A' ? isNaDebitur(d) : (d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit))
+        : (rawList || []);
 
-    const activeList = (activeMonth === 'agustus')
-      ? masterDebiturAgustus
-      : (activeMonth === 'oktober' ? masterDebiturOktober : masterDebiturSeptember);
+      filtered.forEach(d => {
+        const s = d.status || '';
+        if (isUsak(s)) usak++;
+        else if (isUregStatus(s)) ureg++;
+        else if (isNonUregStatus(s)) nonUreg++;
+      });
+      return { total: usak + ureg + nonUreg, usak, ureg, nonUreg };
+    }
 
-    let usakCount = 0;
-    let uregCount = 0;
-    let nonUregCount = 0;
+    const sepStats = getCounts(masterDebiturSeptember);
+    const oktStats = getCounts(masterDebiturOktober);
 
-    const listToCount = (selectedKodeUnit && selectedKodeUnit !== 'ALL')
-      ? (activeList || []).filter(d => d.kodeUnit === selectedKodeUnit)
-      : (activeList || []);
-
-    listToCount.forEach(d => {
-      const s = d.status || '';
-      if (isUsak(s)) {
-        usakCount++;
-      } else if (isUregStatus(s)) {
-        uregCount++;
-      } else if (isNonUregStatus(s)) {
-        nonUregCount++;
-      }
-    });
-
-    const totalDebitur = usakCount + uregCount + nonUregCount;
-    const usakPct = totalDebitur > 0 ? ((usakCount / totalDebitur) * 100).toFixed(1) : '0';
-    const uregPct = totalDebitur > 0 ? ((uregCount / totalDebitur) * 100).toFixed(1) : '0';
-    const nonUregPct = totalDebitur > 0 ? ((nonUregCount / totalDebitur) * 100).toFixed(1) : '0';
-
-    // Update Header & Stats Panel
     const subtitleEl = document.getElementById('donut-chart-subtitle');
     const badgeTotal = document.getElementById('donut-badge-val-total');
-    const statUsakVal = document.getElementById('donut-stat-count-usak');
-    const statUsakPct = document.getElementById('donut-stat-pct-usak');
-    const statUregVal = document.getElementById('donut-stat-count-ureg');
-    const statUregPct = document.getElementById('donut-stat-pct-ureg');
-    const statNonUregVal = document.getElementById('donut-stat-count-non-ureg');
-    const statNonUregPct = document.getElementById('donut-stat-pct-non-ureg');
-
-    if (subtitleEl) subtitleEl.textContent = `Rasio USAK, UREG & Non UREG • ${monthName}`;
-    if (badgeTotal) badgeTotal.textContent = totalDebitur.toLocaleString('id-ID');
-    if (statUsakVal) statUsakVal.textContent = usakCount.toLocaleString('id-ID');
-    if (statUsakPct) statUsakPct.textContent = `${usakPct}%`;
-    if (statUregVal) statUregVal.textContent = uregCount.toLocaleString('id-ID');
-    if (statUregPct) statUregPct.textContent = `${uregPct}%`;
-    if (statNonUregVal) statNonUregVal.textContent = nonUregCount.toLocaleString('id-ID');
-    if (statNonUregPct) statNonUregPct.textContent = `${nonUregPct}%`;
-
+    const badgeLbl = document.getElementById('donut-badge-lbl');
+    const statsPanel = document.getElementById('donut-stats-panel');
     const ctx = canvas.getContext('2d');
-    debtorDonutChartInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['USAK', 'UREG', 'Non UREG'],
-        datasets: [{
-          data: totalDebitur > 0 ? [usakCount, uregCount, nonUregCount] : [1],
-          backgroundColor: totalDebitur > 0 ? ['#38bdf8', '#f59e0b', '#64748b'] : ['rgba(255, 255, 255, 0.1)'],
-          borderColor: totalDebitur > 0 ? ['#0284c7', '#d97706', '#475569'] : ['rgba(255, 255, 255, 0.15)'],
-          borderWidth: 2,
-          hoverBackgroundColor: ['#7dd3fc', '#fbbf24', '#94a3b8'],
-          hoverOffset: 4
+
+    // Update active tab styling
+    document.querySelectorAll('.comp-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === compositionChartMode);
+    });
+
+    if (compositionChartMode === 'compare') {
+      // -----------------------------------------------------------------
+      // MODE KEDUANYA: Grouped Bar Chart Comparing Sep vs Okt
+      // -----------------------------------------------------------------
+      if (subtitleEl) subtitleEl.textContent = 'September vs Oktober • Rasio Debitur';
+      if (badgeLbl) badgeLbl.textContent = 'Sep vs Okt:';
+      if (badgeTotal) {
+        badgeTotal.innerHTML = `<span style="color:#38bdf8">${sepStats.total.toLocaleString('id-ID')}</span> <span style="color:#64748b;font-weight:400">vs</span> <span style="color:#f87171">${oktStats.total.toLocaleString('id-ID')}</span>`;
+      }
+
+      if (statsPanel) {
+        function renderCompItem(name, sepVal, oktVal, statClass) {
+          const diff = oktVal - sepVal;
+          let diffClass = 'comp-diff-zero';
+          let diffText = '0 (0.0%)';
+
+          if (diff > 0) {
+            const diffPct = sepVal > 0 ? ((diff / sepVal) * 100).toFixed(1) : '100';
+            diffClass = 'comp-diff-pos';
+            diffText = `+${diff.toLocaleString('id-ID')} (+${diffPct}%)`;
+          } else if (diff < 0) {
+            const diffPct = sepVal > 0 ? ((Math.abs(diff) / sepVal) * 100).toFixed(1) : '0';
+            diffClass = 'comp-diff-neg';
+            diffText = `${diff.toLocaleString('id-ID')} (-${diffPct}%)`;
+          }
+
+          return `
+            <div class="comp-stat-compare-item ${statClass}">
+              <div class="comp-compare-header">
+                <span class="comp-compare-title">${name}</span>
+                <span class="comp-compare-diff ${diffClass}">
+                  ${diffText}
+                </span>
+              </div>
+              <div class="comp-compare-body">
+                <span>Sep: <strong class="comp-val-sep">${sepVal.toLocaleString('id-ID')}</strong></span>
+                <span class="comp-vs-sep">➔</span>
+                <span>Okt: <strong class="comp-val-okt">${oktVal.toLocaleString('id-ID')}</strong></span>
+              </div>
+            </div>
+          `;
+        }
+
+        statsPanel.innerHTML = `
+          ${renderCompItem('USAK', sepStats.usak, oktStats.usak, 'stat-usak')}
+          ${renderCompItem('UREG', sepStats.ureg, oktStats.ureg, 'stat-ureg')}
+          ${renderCompItem('Non UREG', sepStats.nonUreg, oktStats.nonUreg, 'stat-non-ureg')}
+        `;
+      }
+
+      const maxVal = Math.max(
+        sepStats.usak, oktStats.usak,
+        sepStats.ureg, oktStats.ureg,
+        sepStats.nonUreg, oktStats.nonUreg,
+        1
+      );
+      const yMax = Math.ceil(maxVal * 1.3);
+
+      debtorDonutChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['USAK', 'UREG', 'Non UREG'],
+          datasets: [
+            {
+              label: 'September',
+              data: [sepStats.usak, sepStats.ureg, sepStats.nonUreg],
+              backgroundColor: 'rgba(56, 189, 248, 0.85)',
+              borderColor: '#0284c7',
+              borderWidth: 1.2,
+              borderRadius: 4,
+              barPercentage: 0.82,
+              categoryPercentage: 0.75,
+              minBarLength: 2
+            },
+            {
+              label: 'Oktober',
+              data: [oktStats.usak, oktStats.ureg, oktStats.nonUreg],
+              backgroundColor: 'rgba(239, 68, 68, 0.85)',
+              borderColor: '#b91c1c',
+              borderWidth: 1.2,
+              borderRadius: 4,
+              barPercentage: 0.82,
+              categoryPercentage: 0.75,
+              minBarLength: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 300 },
+          layout: { padding: { top: 22, right: 6, bottom: 2, left: 2 } },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 8,
+                boxHeight: 8,
+                color: '#e2e8f0',
+                font: { family: "'Segoe UI', 'Inter', sans-serif", size: 9.5, weight: '600' },
+                padding: 6
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              titleColor: '#f8fafc',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 8,
+              callbacks: {
+                label: (context) => {
+                  const m = context.dataset.label || '';
+                  const v = (context.raw || 0).toLocaleString('id-ID');
+                  const tot = m === 'September' ? sepStats.total : oktStats.total;
+                  const pct = tot > 0 ? ((context.raw / tot) * 100).toFixed(1) : '0';
+                  return ` ${m}: ${v} debitur (${pct}%)`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: yMax,
+              ticks: {
+                color: '#94a3b8',
+                font: { family: "'Segoe UI', sans-serif", size: 8.5, weight: 'bold' },
+                callback: (val) => val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.06)' }
+            },
+            x: {
+              ticks: {
+                color: '#94a3b8',
+                font: { family: "'Segoe UI', sans-serif", size: 9, weight: '600' }
+              },
+              grid: { display: false }
+            }
+          }
+        },
+        plugins: [{
+          id: 'compBarLabels',
+          afterDatasetsDraw(chart) {
+            const { ctx: c } = chart;
+            chart.data.datasets.forEach((dataset, dIdx) => {
+              const meta = chart.getDatasetMeta(dIdx);
+              if (!meta || meta.hidden) return;
+              meta.data.forEach((bar, idx) => {
+                const val = dataset.data[idx];
+                if (typeof val === 'number') {
+                  c.save();
+                  const isSep = dIdx === 0;
+                  // Stagger vertical height so Sep is positioned higher and Okt is lower
+                  const baseY = val > 0 ? bar.y : (bar.base || bar.y);
+                  const labelY = isSep ? (baseY - 13) : (baseY - 2);
+                  const labelX = bar.x;
+
+                  c.fillStyle = isSep ? '#38bdf8' : '#f87171';
+                  c.font = 'bold 8px "Segoe UI", sans-serif';
+                  c.textAlign = 'center';
+                  c.textBaseline = 'bottom';
+                  c.shadowColor = 'rgba(0, 0, 0, 0.95)';
+                  c.shadowBlur = 3;
+                  const displayStr = val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val.toString();
+                  c.fillText(displayStr, labelX, labelY);
+                  c.restore();
+                }
+              });
+            });
+          }
         }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '68%',
-        animation: { duration: 350 },
-        layout: { padding: 4 },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-            titleColor: '#f8fafc',
-            bodyColor: '#cbd5e1',
-            borderColor: '#334155',
-            borderWidth: 1,
-            padding: 8,
-            callbacks: {
-              label: (context) => {
-                if (totalDebitur === 0) return ' Tidak ada debitur';
-                const label = context.label || '';
-                const val = (context.raw || 0).toLocaleString('id-ID');
-                const pct = totalDebitur > 0 ? ((context.raw / totalDebitur) * 100).toFixed(1) : 0;
-                return ` ${label}: ${val} debitur (${pct}%)`;
+      });
+
+    } else {
+      // -----------------------------------------------------------------
+      // SINGLE MONTH MODE (September OR Oktober Donut Chart)
+      // -----------------------------------------------------------------
+      const isOkt = compositionChartMode === 'oktober';
+      const activeStats = isOkt ? oktStats : sepStats;
+      const monthLabel = isOkt ? 'Oktober' : 'September';
+
+      const totalDebitur = activeStats.total;
+      const usakCount = activeStats.usak;
+      const uregCount = activeStats.ureg;
+      const nonUregCount = activeStats.nonUreg;
+
+      const usakPct = totalDebitur > 0 ? ((usakCount / totalDebitur) * 100).toFixed(1) : '0';
+      const uregPct = totalDebitur > 0 ? ((uregCount / totalDebitur) * 100).toFixed(1) : '0';
+      const nonUregPct = totalDebitur > 0 ? ((nonUregCount / totalDebitur) * 100).toFixed(1) : '0';
+
+      if (subtitleEl) subtitleEl.textContent = `Rasio USAK, UREG & Non UREG • ${monthLabel}`;
+      if (badgeLbl) badgeLbl.textContent = 'Total:';
+      if (badgeTotal) badgeTotal.textContent = totalDebitur.toLocaleString('id-ID');
+
+      if (statsPanel) {
+        statsPanel.innerHTML = `
+          <div class="donut-stat-item stat-usak">
+            <div class="donut-stat-header">
+              <span class="donut-legend-dot dot-usak"></span>
+              <span class="donut-stat-label">USAK</span>
+            </div>
+            <div class="donut-stat-values">
+              <strong class="donut-stat-count">${usakCount.toLocaleString('id-ID')}</strong>
+              <span class="donut-stat-pct">${usakPct}%</span>
+            </div>
+          </div>
+          <div class="donut-stat-item stat-ureg">
+            <div class="donut-stat-header">
+              <span class="donut-legend-dot dot-ureg"></span>
+              <span class="donut-stat-label">UREG</span>
+            </div>
+            <div class="donut-stat-values">
+              <strong class="donut-stat-count">${uregCount.toLocaleString('id-ID')}</strong>
+              <span class="donut-stat-pct stat-ureg-pct">${uregPct}%</span>
+            </div>
+          </div>
+          <div class="donut-stat-item stat-non-ureg">
+            <div class="donut-stat-header">
+              <span class="donut-legend-dot dot-non-ureg"></span>
+              <span class="donut-stat-label">Non UREG</span>
+            </div>
+            <div class="donut-stat-values">
+              <strong class="donut-stat-count">${nonUregCount.toLocaleString('id-ID')}</strong>
+              <span class="donut-stat-pct stat-non-ureg-pct">${nonUregPct}%</span>
+            </div>
+          </div>
+        `;
+      }
+
+      debtorDonutChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['USAK', 'UREG', 'Non UREG'],
+          datasets: [{
+            data: totalDebitur > 0 ? [usakCount, uregCount, nonUregCount] : [1],
+            backgroundColor: totalDebitur > 0 ? ['#38bdf8', '#f59e0b', '#64748b'] : ['rgba(255, 255, 255, 0.1)'],
+            borderColor: totalDebitur > 0 ? ['#0284c7', '#d97706', '#475569'] : ['rgba(255, 255, 255, 0.15)'],
+            borderWidth: 2,
+            hoverBackgroundColor: ['#7dd3fc', '#fbbf24', '#94a3b8'],
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          animation: { duration: 300 },
+          layout: { padding: 4 },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              titleColor: '#f8fafc',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 8,
+              callbacks: {
+                label: (context) => {
+                  if (totalDebitur === 0) return ' Tidak ada debitur';
+                  const label = context.label || '';
+                  const val = (context.raw || 0).toLocaleString('id-ID');
+                  const pct = totalDebitur > 0 ? ((context.raw / totalDebitur) * 100).toFixed(1) : 0;
+                  return ` ${label}: ${val} debitur (${pct}%)`;
+                }
               }
             }
           }
-        }
-      },
-      plugins: [{
-        id: 'donutCenterText',
-        afterDraw(chart) {
-          const { ctx, chartArea } = chart;
-          if (!chartArea) return;
-          const centerX = (chartArea.left + chartArea.right) / 2;
-          const centerY = (chartArea.top + chartArea.bottom) / 2;
+        },
+        plugins: [{
+          id: 'donutCenterText',
+          afterDraw(chart) {
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return;
+            const centerX = (chartArea.left + chartArea.right) / 2;
+            const centerY = (chartArea.top + chartArea.bottom) / 2;
 
-          ctx.save();
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
+            c.save();
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
 
-          // Center Total Value
-          ctx.fillStyle = '#f8fafc';
-          ctx.font = 'bold 15px "Segoe UI", "Inter", sans-serif';
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-          ctx.shadowBlur = 3;
-          ctx.fillText(totalDebitur.toLocaleString('id-ID'), centerX, centerY - 6);
+            c.fillStyle = '#f8fafc';
+            c.font = 'bold 15px "Segoe UI", "Inter", sans-serif';
+            c.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            c.shadowBlur = 3;
+            c.fillText(totalDebitur.toLocaleString('id-ID'), centerX, centerY - 6);
 
-          // Center Subtitle
-          ctx.fillStyle = '#94a3b8';
-          ctx.font = '600 9px "Segoe UI", "Inter", sans-serif';
-          ctx.fillText('Total Debitur', centerX, centerY + 9);
+            c.fillStyle = '#94a3b8';
+            c.font = '600 9px "Segoe UI", "Inter", sans-serif';
+            c.fillText('Total Debitur', centerX, centerY + 9);
 
-          ctx.restore();
-        }
-      }]
-    });
+            c.restore();
+          }
+        }]
+      });
+    }
   }
 
   // Wrapper function to render both charts
@@ -988,10 +1243,12 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedKodeUnit = keyVal;
 
     if (!keyVal || keyVal === 'ALL') {
-      selectedNameSpan.textContent = 'Silakan Pilih Kode Unit';
+      selectedNameSpan.textContent = 'Silakan Pilih Kode Unit / MKA';
+    } else if (keyVal === '#N/A') {
+      selectedNameSpan.textContent = '#N/A (Debitur Tanpa MKA)';
     } else {
       const resolvedName = resolveKodeUnitName(keyVal);
-      selectedNameSpan.textContent = resolvedName;
+      selectedNameSpan.textContent = resolvedName || keyVal;
     }
 
     renderLeaderboard();
@@ -1011,9 +1268,38 @@ document.addEventListener('DOMContentLoaded', () => {
   if (monthSelect) {
     monthSelect.addEventListener('change', (e) => {
       selectedMonth = e.target.value;
+      if (compositionChartMode !== 'compare') {
+        compositionChartMode = selectedMonth;
+      }
       renderLeaderboard();
       renderDebiturTable();
       renderDashboardCharts();
+    });
+  }
+
+  // Composition Chart Mode Tab Buttons (Sep | Okt | Keduanya)
+  const compTabSep = document.getElementById('comp-tab-sep');
+  const compTabOkt = document.getElementById('comp-tab-okt');
+  const compTabCompare = document.getElementById('comp-tab-compare');
+
+  if (compTabSep) {
+    compTabSep.addEventListener('click', () => {
+      compositionChartMode = 'september';
+      renderDebtorCompositionDonutChart();
+    });
+  }
+
+  if (compTabOkt) {
+    compTabOkt.addEventListener('click', () => {
+      compositionChartMode = 'oktober';
+      renderDebtorCompositionDonutChart();
+    });
+  }
+
+  if (compTabCompare) {
+    compTabCompare.addEventListener('click', () => {
+      compositionChartMode = 'compare';
+      renderDebtorCompositionDonutChart();
     });
   }
 
@@ -1116,15 +1402,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     activePopupColKey = colKey;
 
-    let baseDataset = (selectedMonth === 'agustus')
-      ? masterDebiturAgustus
-      : (selectedMonth === 'oktober' ? masterDebiturOktober : masterDebiturSeptember);
+    let baseDataset = (selectedMonth === 'oktober') ? masterDebiturOktober : masterDebiturSeptember;
     if (!baseDataset || baseDataset.length === 0) {
       baseDataset = (selectedMonth === 'oktober') ? masterDebiturOktober : masterDebiturSeptember;
     }
 
     if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-      baseDataset = baseDataset.filter(d => d.kodeUnit === selectedKodeUnit);
+      if (selectedKodeUnit === '#N/A') {
+        baseDataset = baseDataset.filter(d => isNaDebitur(d));
+      } else {
+        baseDataset = baseDataset.filter(d => d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit);
+      }
     }
 
     if (tableSearchQuery) {
@@ -1698,23 +1986,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const sgpRows = document.querySelectorAll('#sgp-summary-tbody tr');
       sgpRows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length === 7) {
+        if (cells.length === 5) {
           sgpData.push({
             name: cells[0].textContent.trim(),
-            agustusGenuine: parseInt(cells[1].textContent.trim()) || 0,
-            septemberGenuine: parseInt(cells[2].textContent.trim()) || 0,
-            oktoberGenuine: parseInt(cells[3].textContent.trim()) || 0,
-            agustusUreg: parseInt(cells[4].textContent.trim()) || 0,
-            septemberUreg: parseInt(cells[5].textContent.trim()) || 0,
-            oktoberUreg: parseInt(cells[6].textContent.trim()) || 0
+            septemberGenuine: parseInt(cells[1].textContent.trim()) || 0,
+            oktoberGenuine: parseInt(cells[2].textContent.trim()) || 0,
+            septemberUreg: parseInt(cells[3].textContent.trim()) || 0,
+            oktoberUreg: parseInt(cells[4].textContent.trim()) || 0
           });
         }
       });
 
-      const elAgtTot = parseInt(document.getElementById('sgp-total-agustus')?.textContent) || 0;
       const elSepTot = parseInt(document.getElementById('sgp-total-september')?.textContent) || 0;
       const elOktTot = parseInt(document.getElementById('sgp-total-oktober')?.textContent) || 0;
-      const elAgtUregTot = parseInt(document.getElementById('sgp-total-ureg-agustus')?.textContent) || 0;
       const elSepUregTot = parseInt(document.getElementById('sgp-total-ureg-september')?.textContent) || 0;
       const elOktUregTot = parseInt(document.getElementById('sgp-total-ureg-oktober')?.textContent) || 0;
 
@@ -1732,13 +2016,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const rankTotal = parseInt(document.getElementById('leaderboard-total-val')?.textContent) || 0;
 
-      let currentDataset = (selectedMonth === 'agustus')
-        ? masterDebiturAgustus
-        : (selectedMonth === 'oktober' ? masterDebiturOktober : masterDebiturSeptember);
+      let currentDataset = (selectedMonth === 'oktober') ? masterDebiturOktober : masterDebiturSeptember;
       if (!currentDataset || currentDataset.length === 0) currentDataset = masterDebiturOktober;
       let filteredDebitur = currentDataset;
       if (selectedKodeUnit && selectedKodeUnit !== 'ALL') {
-        filteredDebitur = filteredDebitur.filter(d => d.kodeUnit === selectedKodeUnit);
+        if (selectedKodeUnit === '#N/A') {
+          filteredDebitur = filteredDebitur.filter(d => isNaDebitur(d));
+        } else {
+          filteredDebitur = filteredDebitur.filter(d => d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit);
+        }
       }
       if (tableSearchQuery) {
         filteredDebitur = filteredDebitur.filter(d => {
@@ -1766,15 +2052,13 @@ document.addEventListener('DOMContentLoaded', () => {
           views: [{ showGridLines: true }]
         });
 
-        // Set column widths across A-G
+        // Set column widths across A-E (5 columns)
         ws1.columns = [
           { key: 'colA', width: 28 }, // Nama SGP
-          { key: 'colB', width: 18 }, // USAK Agt
-          { key: 'colC', width: 18 }, // USAK Sep
-          { key: 'colD', width: 18 }, // USAK Okt
-          { key: 'colE', width: 16 }, // UREG Agt
-          { key: 'colF', width: 16 }, // UREG Sep
-          { key: 'colG', width: 16 }  // UREG Okt
+          { key: 'colB', width: 22 }, // USAK Genuine (September)
+          { key: 'colC', width: 22 }, // USAK Genuine (Oktober)
+          { key: 'colD', width: 20 }, // UREG (September)
+          { key: 'colE', width: 20 }  // UREG (Oktober)
         ];
 
         // Title Header
@@ -1797,12 +2081,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // ----------------------------------------------------------------------
         // 1. DUAL COMPARISON CHARTS: UREG & USAK GENUINE
         // ----------------------------------------------------------------------
-        const prevLbl = (selectedMonth === 'oktober') ? 'September' : 'Agustus';
-        const currLbl = (selectedMonth === 'oktober') ? 'Oktober' : 'September';
-        const prevUsakTot = (selectedMonth === 'oktober') ? elSepTot : elAgtTot;
-        const currUsakTot = (selectedMonth === 'oktober') ? elOktTot : elSepTot;
-        const prevUregTot = (selectedMonth === 'oktober') ? elSepUregTot : elAgtUregTot;
-        const currUregTot = (selectedMonth === 'oktober') ? elOktUregTot : elSepUregTot;
+        const prevLbl = 'September';
+        const currLbl = 'Oktober';
+        const prevUsakTot = elSepTot;
+        const currUsakTot = elOktTot;
+        const prevUregTot = elSepUregTot;
+        const currUregTot = elOktUregTot;
 
         const dualChartImg = await generateDualComparisonChartImage(prevUsakTot, currUsakTot, prevUregTot, currUregTot, prevLbl, currLbl);
         if (dualChartImg) {
@@ -1824,10 +2108,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Table 1 Columns Header (Baris 26)
         const sgpHeaders = [
           'Nama SGP',
-          'USAK Genuine (Agustus)',
           'USAK Genuine (September)',
           'USAK Genuine (Oktober)',
-          'UREG (Agustus)',
           'UREG (September)',
           'UREG (Oktober)'
         ];
@@ -1856,14 +2138,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const bgColor = isZebra ? 'FFF8FAFC' : 'FFFFFFFF';
 
           const c1 = row.getCell(1); c1.value = item.name; c1.alignment = { vertical: 'middle', horizontal: 'left' };
-          const c2 = row.getCell(2); c2.value = item.agustusGenuine; c2.numFmt = '#,##0'; c2.alignment = { vertical: 'middle', horizontal: 'center' };
-          const c3 = row.getCell(3); c3.value = item.septemberGenuine; c3.numFmt = '#,##0'; c3.alignment = { vertical: 'middle', horizontal: 'center' };
-          const c4 = row.getCell(4); c4.value = item.oktoberGenuine; c4.numFmt = '#,##0'; c4.alignment = { vertical: 'middle', horizontal: 'center' };
-          const c5 = row.getCell(5); c5.value = item.agustusUreg; c5.numFmt = '#,##0'; c5.alignment = { vertical: 'middle', horizontal: 'center' };
-          const c6 = row.getCell(6); c6.value = item.septemberUreg; c6.numFmt = '#,##0'; c6.alignment = { vertical: 'middle', horizontal: 'center' };
-          const c7 = row.getCell(7); c7.value = item.oktoberUreg; c7.numFmt = '#,##0'; c7.alignment = { vertical: 'middle', horizontal: 'center' };
+          const c2 = row.getCell(2); c2.value = item.septemberGenuine; c2.numFmt = '#,##0'; c2.alignment = { vertical: 'middle', horizontal: 'center' };
+          const c3 = row.getCell(3); c3.value = item.oktoberGenuine; c3.numFmt = '#,##0'; c3.alignment = { vertical: 'middle', horizontal: 'center' };
+          const c4 = row.getCell(4); c4.value = item.septemberUreg; c4.numFmt = '#,##0'; c4.alignment = { vertical: 'middle', horizontal: 'center' };
+          const c5 = row.getCell(5); c5.value = item.oktoberUreg; c5.numFmt = '#,##0'; c5.alignment = { vertical: 'middle', horizontal: 'center' };
 
-          for (let c = 1; c <= 7; c++) {
+          for (let c = 1; c <= 5; c++) {
             const cell = row.getCell(c);
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
             cell.font = { name: 'Segoe UI', size: 10, color: { argb: 'FF1E293B' } };
@@ -1881,14 +2161,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const totRow = ws1.getRow(curRow);
         totRow.height = 24;
         totRow.getCell(1).value = 'TOTAL OVERALL';
-        totRow.getCell(2).value = elAgtTot; totRow.getCell(2).numFmt = '#,##0';
-        totRow.getCell(3).value = elSepTot; totRow.getCell(3).numFmt = '#,##0';
-        totRow.getCell(4).value = elOktTot; totRow.getCell(4).numFmt = '#,##0';
-        totRow.getCell(5).value = elAgtUregTot; totRow.getCell(5).numFmt = '#,##0';
-        totRow.getCell(6).value = elSepUregTot; totRow.getCell(6).numFmt = '#,##0';
-        totRow.getCell(7).value = elOktUregTot; totRow.getCell(7).numFmt = '#,##0';
+        totRow.getCell(2).value = elSepTot; totRow.getCell(2).numFmt = '#,##0';
+        totRow.getCell(3).value = elOktTot; totRow.getCell(3).numFmt = '#,##0';
+        totRow.getCell(4).value = elSepUregTot; totRow.getCell(4).numFmt = '#,##0';
+        totRow.getCell(5).value = elOktUregTot; totRow.getCell(5).numFmt = '#,##0';
 
-        for (let c = 1; c <= 7; c++) {
+        for (let c = 1; c <= 5; c++) {
           const cell = totRow.getCell(c);
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
           cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF003D79' } };
@@ -1987,6 +2265,30 @@ document.addEventListener('DOMContentLoaded', () => {
           };
         }
 
+        const naVal = parseInt(document.getElementById('leaderboard-na-val')?.textContent) || 0;
+        if (naVal > 0) {
+          curMkaRow++;
+          const mkaNaRow = ws1.getRow(curMkaRow);
+          mkaNaRow.height = 20;
+          mkaNaRow.getCell(1).value = '';
+          mkaNaRow.getCell(2).value = '#N/A';
+          mkaNaRow.getCell(3).value = naVal;
+          mkaNaRow.getCell(3).numFmt = '#,##0';
+
+          for (let c = 1; c <= 3; c++) {
+            const cell = mkaNaRow.getCell(c);
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDE68A' } };
+            cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF78350F' } };
+            cell.alignment = { vertical: 'middle', horizontal: c === 2 ? 'left' : 'center' };
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+            };
+          }
+        }
+
         // SHEET 2: DATA DETAIL DEBITUR
         const ws2 = workbook.addWorksheet('Data Detail Debitur', {
           views: [{ showGridLines: true }]
@@ -2073,12 +2375,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ["Tanggal Export:", new Date().toLocaleString('id-ID')],
         [],
         ["--- RINGKASAN USAK GENUINE & UREG PER SGP ---"],
-        ["Nama SGP", "USAK Genuine (Agustus)", "USAK Genuine (September)", "UREG (Agustus)", "UREG (September)"]
+        ["Nama SGP", "USAK Genuine (September)", "USAK Genuine (Oktober)", "UREG (September)", "UREG (Oktober)"]
       ];
       sgpData.forEach(item => {
-        summaryData.push([item.name, item.agustusGenuine, item.septemberGenuine, item.agustusUreg, item.septemberUreg]);
+        summaryData.push([item.name, item.septemberGenuine, item.oktoberGenuine, item.septemberUreg, item.oktoberUreg]);
       });
-      summaryData.push(["TOTAL OVERALL", elAgtTot, elSepTot, elAgtUregTot, elSepUregTot]);
+      summaryData.push(["TOTAL OVERALL", elSepTot, elOktTot, elSepUregTot, elOktUregTot]);
       summaryData.push([]);
       summaryData.push(["--- RANKING KODE UNIT - MKA ---"]);
       summaryData.push(["Rank", "Kode Unit - MKA", "Jumlah USAK"]);
@@ -2166,7 +2468,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const donutImgData = getCanvasImageWithBg(donutCanvas, '#0c182c');
 
       // 2. Capture Text Labels and Stats from DOM
-      const pdfSgpSubtitle = document.getElementById('sgp-chart-subtitle')?.textContent || 'Agustus vs September • Kenaikan/Penurunan per SGP';
+      const pdfSgpSubtitle = document.getElementById('sgp-chart-subtitle')?.textContent || 'September vs Oktober • Kenaikan/Penurunan per SGP';
       const pdfSgpLblPrev = document.getElementById('sgp-badge-lbl-prev')?.textContent || 'Sep:';
       const pdfSgpLblCurr = document.getElementById('sgp-badge-lbl-curr')?.textContent || 'Okt:';
       const pdfSgpAgt = document.getElementById('sgp-badge-val-agt')?.textContent || '0';

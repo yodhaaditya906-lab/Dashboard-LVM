@@ -245,15 +245,50 @@ function processRawCsv(csvText, monthContext = '') {
     }
   });
 
-  const unitRankList = Object.values(unitMap);
-  unitRankList.sort((a, b) => b.usakCount - a.usakCount);
-  const mkaRanks = unitRankList.map((item, idx) => ({
-    rank: idx + 1,
-    kodeUnit: item.kodeUnit,
-    name: item.name,
-    namaMka: item.namaMka,
-    usakCount: item.usakCount
-  }));
+  let mkaRanks = [];
+  if (monthContext && monthContext.toLowerCase().includes('okt')) {
+    const mkaMap = {};
+    debiturData.forEach(d => {
+      const mkaName = (d.namaMka || '').trim();
+      if (!mkaName || mkaName === '#N/A' || mkaName === '-' || mkaName.toUpperCase() === 'NULL' || mkaName.toUpperCase() === 'UNASSIGNED') {
+        return;
+      }
+      if (!mkaMap[mkaName]) {
+        mkaMap[mkaName] = {
+          namaMka: mkaName,
+          kodeUnit: d.kodeUnit || '',
+          name: mkaName,
+          usakCount: 0
+        };
+      }
+      if (d.isGenuine) {
+        mkaMap[mkaName].usakCount += 1;
+      }
+    });
+
+    const mkaRankList = Object.values(mkaMap);
+    mkaRankList.sort((a, b) => {
+      if (b.usakCount !== a.usakCount) return b.usakCount - a.usakCount;
+      return b.name.localeCompare(a.name);
+    });
+    mkaRanks = mkaRankList.map((item, idx) => ({
+      rank: idx + 1,
+      kodeUnit: item.kodeUnit,
+      name: item.name,
+      namaMka: item.namaMka,
+      usakCount: item.usakCount
+    }));
+  } else {
+    const unitRankList = Object.values(unitMap);
+    unitRankList.sort((a, b) => b.usakCount - a.usakCount);
+    mkaRanks = unitRankList.map((item, idx) => ({
+      rank: idx + 1,
+      kodeUnit: item.kodeUnit,
+      name: item.name,
+      namaMka: item.namaMka,
+      usakCount: item.usakCount
+    }));
+  }
 
   return {
     debiturData,
