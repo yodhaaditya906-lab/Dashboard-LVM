@@ -1040,10 +1040,26 @@ body.powerbi-theme {
 
 .comp-compare-body {
   display: flex;
+  flex-direction: column;
+  gap: 2.5px;
+  font-size: 9.5px;
+  padding-left: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 3px;
+  margin-top: 2px;
+}
+
+.comp-compare-row {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 9.5px;
-  padding-left: 4px;
+  width: 100%;
+}
+
+.comp-compare-lbl {
+  color: #94a3b8;
+  font-size: 8.5px;
+  font-weight: 600;
 }
 
 .comp-val-sep {
@@ -1054,12 +1070,6 @@ body.powerbi-theme {
 .comp-val-okt {
   color: #f87171;
   font-weight: 700;
-}
-
-.comp-vs-sep {
-  color: #64748b;
-  font-size: 8.5px;
-  font-weight: 600;
 }
 
 /* Yellow Leaderboard Container */
@@ -1839,12 +1849,21 @@ body.powerbi-theme {
 
   .panel-compare-mode .comp-compare-body {
     display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
+    flex-direction: column !important;
+    gap: 3px !important;
     font-size: 10.5px !important;
     width: 100% !important;
     padding-left: 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-top: 3.5px !important;
     margin-top: 2px !important;
+  }
+
+  .panel-compare-mode .comp-compare-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
   }
 
   .donut-stat-item {

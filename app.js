@@ -986,9 +986,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </span>
               </div>
               <div class="comp-compare-body">
-                <span>Sep: <strong class="comp-val-sep">${sepVal.toLocaleString('id-ID')}</strong></span>
-                <span class="comp-vs-sep">➔</span>
-                <span>Okt: <strong class="comp-val-okt">${oktVal.toLocaleString('id-ID')}</strong></span>
+                <div class="comp-compare-row">
+                  <span class="comp-compare-lbl">Sep:</span>
+                  <strong class="comp-val-sep">${sepVal.toLocaleString('id-ID')}</strong>
+                </div>
+                <div class="comp-compare-row">
+                  <span class="comp-compare-lbl">Okt:</span>
+                  <strong class="comp-val-okt">${oktVal.toLocaleString('id-ID')}</strong>
+                </div>
               </div>
             </div>
           `;
@@ -2557,38 +2562,71 @@ document.addEventListener('DOMContentLoaded', () => {
         pdfDonutBadgeHeader = `Sep: <strong style="color:#38bdf8;">${sepStats.total.toLocaleString('id-ID')}</strong> vs Okt: <strong style="color:#f87171;">${oktStats.total.toLocaleString('id-ID')}</strong>`;
 
         pdfCard2RightHtml = `
-          <div style="background-color: #16243d; border-left: 3px solid #38bdf8; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
-            <table style="width: 100%; border-collapse: collapse;">
+          <div style="background-color: #16243d; border-left: 3px solid #38bdf8; border-radius: 4px; padding: 5px 8px; margin-bottom: 5px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
               <tr>
-                <td style="font-size: 8.5px; color: #94a3b8; font-weight: 700;">USAK</td>
+                <td style="font-size: 9px; color: #f8fafc; font-weight: 700;">USAK</td>
                 <td style="text-align: right; font-size: 8px;">${formatDiffBadge(diffUsak, sepStats.usak)}</td>
               </tr>
             </table>
-            <div style="font-size: 9.5px; font-weight: 600; color: #cbd5e1; margin-top: 2px;">
-              Sep: <strong style="color:#38bdf8">${sepStats.usak.toLocaleString('id-ID')}</strong> ➔ Okt: <strong style="color:#f87171">${oktStats.usak.toLocaleString('id-ID')}</strong>
-            </div>
-          </div>
-          <div style="background-color: #16243d; border-left: 3px solid #f59e0b; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
-            <table style="width: 100%; border-collapse: collapse;">
+            <table style="width: 100%; border-collapse: collapse; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2px;">
               <tr>
-                <td style="font-size: 8.5px; color: #94a3b8; font-weight: 700;">UREG</td>
+                <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Sep:</td>
+                <td style="font-size: 9.5px; font-weight: 700; color: #38bdf8; text-align: right; padding: 1.5px 0;">
+                  ${sepStats.usak.toLocaleString('id-ID')}
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Okt:</td>
+                <td style="font-size: 9.5px; font-weight: 700; color: #f87171; text-align: right; padding: 1.5px 0;">
+                  ${oktStats.usak.toLocaleString('id-ID')}
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div style="background-color: #16243d; border-left: 3px solid #f59e0b; border-radius: 4px; padding: 5px 8px; margin-bottom: 5px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
+              <tr>
+                <td style="font-size: 9px; color: #f8fafc; font-weight: 700;">UREG</td>
                 <td style="text-align: right; font-size: 8px;">${formatDiffBadge(diffUreg, sepStats.ureg)}</td>
               </tr>
             </table>
-            <div style="font-size: 9.5px; font-weight: 600; color: #cbd5e1; margin-top: 2px;">
-              Sep: <strong style="color:#38bdf8">${sepStats.ureg.toLocaleString('id-ID')}</strong> ➔ Okt: <strong style="color:#f87171">${oktStats.ureg.toLocaleString('id-ID')}</strong>
-            </div>
-          </div>
-          <div style="background-color: #16243d; border-left: 3px solid #94a3b8; border-radius: 4px; padding: 5px 7px;">
-            <table style="width: 100%; border-collapse: collapse;">
+            <table style="width: 100%; border-collapse: collapse; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2px;">
               <tr>
-                <td style="font-size: 8.5px; color: #94a3b8; font-weight: 700;">Non UREG</td>
+                <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Sep:</td>
+                <td style="font-size: 9.5px; font-weight: 700; color: #38bdf8; text-align: right; padding: 1.5px 0;">
+                  ${sepStats.ureg.toLocaleString('id-ID')}
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Okt:</td>
+                <td style="font-size: 9.5px; font-weight: 700; color: #f87171; text-align: right; padding: 1.5px 0;">
+                  ${oktStats.ureg.toLocaleString('id-ID')}
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div style="background-color: #16243d; border-left: 3px solid #94a3b8; border-radius: 4px; padding: 5px 8px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
+              <tr>
+                <td style="font-size: 9px; color: #f8fafc; font-weight: 700;">Non UREG</td>
                 <td style="text-align: right; font-size: 8px;">${formatDiffBadge(diffNonUreg, sepStats.nonUreg)}</td>
               </tr>
             </table>
-            <div style="font-size: 9.5px; font-weight: 600; color: #cbd5e1; margin-top: 2px;">
-              Sep: <strong style="color:#38bdf8">${sepStats.nonUreg.toLocaleString('id-ID')}</strong> ➔ Okt: <strong style="color:#f87171">${oktStats.nonUreg.toLocaleString('id-ID')}</strong>
-            </div>
+            <table style="width: 100%; border-collapse: collapse; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2px;">
+              <tr>
+                <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Sep:</td>
+                <td style="font-size: 9.5px; font-weight: 700; color: #38bdf8; text-align: right; padding: 1.5px 0;">
+                  ${sepStats.nonUreg.toLocaleString('id-ID')}
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Okt:</td>
+                <td style="font-size: 9.5px; font-weight: 700; color: #f87171; text-align: right; padding: 1.5px 0;">
+                  ${oktStats.nonUreg.toLocaleString('id-ID')}
+                </td>
+              </tr>
+            </table>
           </div>
         `;
       } else {
