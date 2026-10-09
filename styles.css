@@ -102,6 +102,26 @@ body.powerbi-theme {
   box-shadow: 0 0 8px rgba(30, 64, 175, 0.6);
 }
 
+.btn-live-action:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.sync-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.sync-icon.spinning {
+  animation: spinIcon 0.8s linear infinite;
+}
+
+@keyframes spinIcon {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .btn-excel {
   background-color: #107c41 !important;
   border-color: #0b5c30 !important;

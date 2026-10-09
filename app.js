@@ -4,7 +4,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const API_ENDPOINT = '/api/data';
-  const AUTO_REFRESH_MS = 10000;
 
   let masterDebiturSeptember = [];
   let masterDebiturAgustus = [];
@@ -131,13 +130,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return upper.includes('NON UREG') || upper.includes('NON-UREG');
   }
 
-  // Fetch API Endpoint from Node.js Server
-  async function fetchDashboardApi() {
+  // Fetch API Endpoint from Node.js Server (Supports manual force sync)
+  let isFetchingData = false;
+  async function fetchDashboardApi(force = false) {
+    if (isFetchingData) return;
+    isFetchingData = true;
+
+    if (btnSyncNow) {
+      btnSyncNow.disabled = true;
+    }
+    const syncIcon = document.getElementById('btn-sync-icon');
+    const syncLabel = document.getElementById('btn-sync-label');
+    if (syncIcon) syncIcon.classList.add('spinning');
+    if (syncLabel) syncLabel.textContent = 'Memperbarui...';
+
     pulseDot.className = 'status-pulse syncing';
     syncStatusText.textContent = 'Live Sync: Memperbarui data dari Google Sheets...';
 
     try {
-      const response = await fetch(API_ENDPOINT, { cache: 'no-store' });
+      const url = force ? `${API_ENDPOINT}?force=1&t=${Date.now()}` : API_ENDPOINT;
+      const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
@@ -164,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderLeaderboard();
       renderDebiturTable();
       renderSgpSummaryTable();
-      renderDashboardUsakChart();
+      renderDashboardCharts();
 
       const timeStr = new Date().toLocaleTimeString('id-ID');
       pulseDot.className = 'status-pulse';
@@ -173,6 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching dashboard API:', err);
       pulseDot.className = 'status-pulse error';
       syncStatusText.textContent = `Sync Offline: Menampilkan data lokal (${new Date().toLocaleTimeString('id-ID')})`;
+    } finally {
+      isFetchingData = false;
+      if (btnSyncNow) {
+        btnSyncNow.disabled = false;
+      }
+      if (syncIcon) syncIcon.classList.remove('spinning');
+      if (syncLabel) syncLabel.textContent = 'Refresh Data';
     }
   }
 
@@ -1260,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnSyncNow.addEventListener('click', () => {
-    fetchDashboardApi();
+    fetchDashboardApi(true);
   });
 
   nipSelect.addEventListener('change', (e) => {
@@ -2749,7 +2768,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.addEventListener('scroll', closeColumnFilterPopup, { passive: true });
 
-  // Initial Fetch & Start Polling Timer (10s)
+  // Initial Load (Manual refresh only via Refresh Data button or browser reload)
   fetchDashboardApi();
-  setInterval(fetchDashboardApi, AUTO_REFRESH_MS);
 });

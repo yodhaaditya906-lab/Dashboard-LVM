@@ -537,6 +537,21 @@ module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=30');
   }
 
+  // Handle explicit force refresh request (e.g. user clicked "Refresh Data")
+  const isForce = req.url && (req.url.includes('force=1') || req.url.includes('refresh=1'));
+  if (isForce) {
+    try {
+      const payload = await fetchDualMonthData();
+      if (payload && (payload.debiturDataSeptember.length > 0 || payload.debiturDataOktober.length > 0 || payload.debiturData.length > 0)) {
+        inMemoryCache = payload;
+        lastSyncTime = Date.now();
+        return sendJsonResponse(res, 200, payload);
+      }
+    } catch (err) {
+      console.warn('Force refresh error, falling back to cached data:', err.message);
+    }
+  }
+
   // 1. If memory cache is available, serve immediately (0ms)
   if (inMemoryCache && (inMemoryCache.debiturDataSeptember.length > 0 || inMemoryCache.debiturData.length > 0)) {
     triggerBackgroundSync();
