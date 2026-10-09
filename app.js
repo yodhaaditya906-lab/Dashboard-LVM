@@ -1155,8 +1155,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="donut-stat-label">USAK</span>
             </div>
             <div class="donut-stat-values">
-              <strong class="donut-stat-count">${usakCount.toLocaleString('id-ID')}</strong>
-              <span class="donut-stat-pct">${usakPct}%</span>
+              <strong class="donut-stat-count" id="donut-stat-count-usak">${usakCount.toLocaleString('id-ID')}</strong>
+              <span class="donut-stat-pct" id="donut-stat-pct-usak">${usakPct}%</span>
             </div>
           </div>
           <div class="donut-stat-item stat-ureg">
@@ -1165,8 +1165,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="donut-stat-label">UREG</span>
             </div>
             <div class="donut-stat-values">
-              <strong class="donut-stat-count">${uregCount.toLocaleString('id-ID')}</strong>
-              <span class="donut-stat-pct stat-ureg-pct">${uregPct}%</span>
+              <strong class="donut-stat-count" id="donut-stat-count-ureg">${uregCount.toLocaleString('id-ID')}</strong>
+              <span class="donut-stat-pct stat-ureg-pct" id="donut-stat-pct-ureg">${uregPct}%</span>
             </div>
           </div>
           <div class="donut-stat-item stat-non-ureg">
@@ -1175,8 +1175,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="donut-stat-label">Non UREG</span>
             </div>
             <div class="donut-stat-values">
-              <strong class="donut-stat-count">${nonUregCount.toLocaleString('id-ID')}</strong>
-              <span class="donut-stat-pct stat-non-ureg-pct">${nonUregPct}%</span>
+              <strong class="donut-stat-count" id="donut-stat-count-non-ureg">${nonUregCount.toLocaleString('id-ID')}</strong>
+              <span class="donut-stat-pct stat-non-ureg-pct" id="donut-stat-pct-non-ureg">${nonUregPct}%</span>
             </div>
           </div>
         `;
@@ -2488,22 +2488,126 @@ document.addEventListener('DOMContentLoaded', () => {
       const sgpImgData = getCanvasImageWithBg(sgpCanvas, '#0c182c');
       const donutImgData = getCanvasImageWithBg(donutCanvas, '#0c182c');
 
-      // 2. Capture Text Labels and Stats from DOM
+      // 2. Compute Exact Debtor Counts from Active Datasets
+      function calculateDebtorStats(list) {
+        let usak = 0, ureg = 0, nonUreg = 0;
+        const filtered = (selectedKodeUnit && selectedKodeUnit !== 'ALL')
+          ? (list || []).filter(d => selectedKodeUnit === '#N/A' ? isNaDebitur(d) : (d.kodeUnit === selectedKodeUnit || d.namaMka === selectedKodeUnit))
+          : (list || []);
+
+        filtered.forEach(d => {
+          const s = d.status || '';
+          if (isUsak(s)) usak++;
+          else if (isUregStatus(s)) ureg++;
+          else if (isNonUregStatus(s)) nonUreg++;
+        });
+        const total = usak + ureg + nonUreg;
+        return {
+          total,
+          usak,
+          ureg,
+          nonUreg,
+          usakPct: total > 0 ? ((usak / total) * 100).toFixed(1) : '0',
+          uregPct: total > 0 ? ((ureg / total) * 100).toFixed(1) : '0',
+          nonUregPct: total > 0 ? ((nonUreg / total) * 100).toFixed(1) : '0'
+        };
+      }
+
+      const sepStats = calculateDebtorStats(masterDebiturSeptember);
+      const oktStats = calculateDebtorStats(masterDebiturOktober);
+      const activeStats = (selectedMonth === 'september') ? sepStats : oktStats;
+
+      const pdfUsakVal = activeStats.usak.toLocaleString('id-ID');
+      const pdfUsakPct = `${activeStats.usakPct}%`;
+      const pdfUregVal = activeStats.ureg.toLocaleString('id-ID');
+      const pdfUregPct = `${activeStats.uregPct}%`;
+      const pdfNonUregVal = activeStats.nonUreg.toLocaleString('id-ID');
+      const pdfNonUregPct = `${activeStats.nonUregPct}%`;
+      const pdfDonutTotal = activeStats.total.toLocaleString('id-ID');
+
+      // 3. Capture Text Labels and Stats from DOM
       const pdfSgpSubtitle = document.getElementById('sgp-chart-subtitle')?.textContent || 'September vs Oktober • Kenaikan/Penurunan per SGP';
       const pdfSgpLblPrev = document.getElementById('sgp-badge-lbl-prev')?.textContent || 'Sep:';
       const pdfSgpLblCurr = document.getElementById('sgp-badge-lbl-curr')?.textContent || 'Okt:';
-      const pdfSgpAgt = document.getElementById('sgp-badge-val-agt')?.textContent || '0';
-      const pdfSgpSep = document.getElementById('sgp-badge-val-sep')?.textContent || '0';
+      const pdfSgpAgt = document.getElementById('sgp-badge-val-agt')?.textContent || sepStats.usak.toLocaleString('id-ID');
+      const pdfSgpSep = document.getElementById('sgp-badge-val-sep')?.textContent || oktStats.usak.toLocaleString('id-ID');
       const pdfSgpGrowth = document.getElementById('sgp-badge-growth-val')?.textContent || '+0';
 
-      const pdfDonutSubtitle = document.getElementById('donut-chart-subtitle')?.textContent || 'Rasio USAK, UREG & Non UREG';
-      const pdfDonutTotal = document.getElementById('donut-badge-val-total')?.textContent || '0';
-      const pdfUsakVal = document.getElementById('donut-stat-count-usak')?.textContent || '0';
-      const pdfUsakPct = document.getElementById('donut-stat-pct-usak')?.textContent || '0%';
-      const pdfUregVal = document.getElementById('donut-stat-count-ureg')?.textContent || '0';
-      const pdfUregPct = document.getElementById('donut-stat-pct-ureg')?.textContent || '0%';
-      const pdfNonUregVal = document.getElementById('donut-stat-count-non-ureg')?.textContent || '0';
-      const pdfNonUregPct = document.getElementById('donut-stat-pct-non-ureg')?.textContent || '0%';
+      const pdfDonutSubtitle = document.getElementById('donut-chart-subtitle')?.textContent || (compositionChartMode === 'compare' ? 'September vs Oktober • Rasio Debitur' : `Rasio USAK, UREG & Non UREG • ${selectedMonth === 'september' ? 'September' : 'Oktober'}`);
+
+      let pdfCard2RightHtml = '';
+      let pdfDonutBadgeHeader = '';
+
+      if (compositionChartMode === 'compare') {
+        const diffUsak = oktStats.usak - sepStats.usak;
+        const diffUreg = oktStats.ureg - sepStats.ureg;
+        const diffNonUreg = oktStats.nonUreg - sepStats.nonUreg;
+
+        function formatDiffBadge(diff, baseVal) {
+          if (diff > 0) {
+            const pct = baseVal > 0 ? ((diff / baseVal) * 100).toFixed(1) : '100';
+            return `<span style="color:#34d399;font-weight:700;">+${diff.toLocaleString('id-ID')} (+${pct}%)</span>`;
+          } else if (diff < 0) {
+            const pct = baseVal > 0 ? ((Math.abs(diff) / baseVal) * 100).toFixed(1) : '0';
+            return `<span style="color:#f87171;font-weight:700;">${diff.toLocaleString('id-ID')} (-${pct}%)</span>`;
+          }
+          return `<span style="color:#ffffff;font-weight:600;">0 (0.0%)</span>`;
+        }
+
+        pdfDonutBadgeHeader = `Sep: <strong style="color:#38bdf8;">${sepStats.total.toLocaleString('id-ID')}</strong> vs Okt: <strong style="color:#f87171;">${oktStats.total.toLocaleString('id-ID')}</strong>`;
+
+        pdfCard2RightHtml = `
+          <div style="background-color: #16243d; border-left: 3px solid #38bdf8; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="font-size: 8.5px; color: #94a3b8; font-weight: 700;">USAK</td>
+                <td style="text-align: right; font-size: 8px;">${formatDiffBadge(diffUsak, sepStats.usak)}</td>
+              </tr>
+            </table>
+            <div style="font-size: 9.5px; font-weight: 600; color: #cbd5e1; margin-top: 2px;">
+              Sep: <strong style="color:#38bdf8">${sepStats.usak.toLocaleString('id-ID')}</strong> ➔ Okt: <strong style="color:#f87171">${oktStats.usak.toLocaleString('id-ID')}</strong>
+            </div>
+          </div>
+          <div style="background-color: #16243d; border-left: 3px solid #f59e0b; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="font-size: 8.5px; color: #94a3b8; font-weight: 700;">UREG</td>
+                <td style="text-align: right; font-size: 8px;">${formatDiffBadge(diffUreg, sepStats.ureg)}</td>
+              </tr>
+            </table>
+            <div style="font-size: 9.5px; font-weight: 600; color: #cbd5e1; margin-top: 2px;">
+              Sep: <strong style="color:#38bdf8">${sepStats.ureg.toLocaleString('id-ID')}</strong> ➔ Okt: <strong style="color:#f87171">${oktStats.ureg.toLocaleString('id-ID')}</strong>
+            </div>
+          </div>
+          <div style="background-color: #16243d; border-left: 3px solid #94a3b8; border-radius: 4px; padding: 5px 7px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="font-size: 8.5px; color: #94a3b8; font-weight: 700;">Non UREG</td>
+                <td style="text-align: right; font-size: 8px;">${formatDiffBadge(diffNonUreg, sepStats.nonUreg)}</td>
+              </tr>
+            </table>
+            <div style="font-size: 9.5px; font-weight: 600; color: #cbd5e1; margin-top: 2px;">
+              Sep: <strong style="color:#38bdf8">${sepStats.nonUreg.toLocaleString('id-ID')}</strong> ➔ Okt: <strong style="color:#f87171">${oktStats.nonUreg.toLocaleString('id-ID')}</strong>
+            </div>
+          </div>
+        `;
+      } else {
+        pdfDonutBadgeHeader = `Total: <strong style="color:#ffffff;">${pdfDonutTotal}</strong>`;
+        pdfCard2RightHtml = `
+          <div style="background-color: #16243d; border-left: 3px solid #38bdf8; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
+            <div style="font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">USAK</div>
+            <div style="font-size: 11px; font-weight: 800; color: #f8fafc; margin-top: 1px;">${pdfUsakVal} <span style="font-size: 8.5px; color: #38bdf8; font-weight: 700;">(${pdfUsakPct})</span></div>
+          </div>
+          <div style="background-color: #16243d; border-left: 3px solid #f59e0b; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
+            <div style="font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">UREG</div>
+            <div style="font-size: 11px; font-weight: 800; color: #f8fafc; margin-top: 1px;">${pdfUregVal} <span style="font-size: 8.5px; color: #f59e0b; font-weight: 700;">(${pdfUregPct})</span></div>
+          </div>
+          <div style="background-color: #16243d; border-left: 3px solid #94a3b8; border-radius: 4px; padding: 5px 7px;">
+            <div style="font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Non UREG</div>
+            <div style="font-size: 11px; font-weight: 800; color: #f8fafc; margin-top: 1px;">${pdfNonUregVal} <span style="font-size: 8.5px; color: #cbd5e1; font-weight: 700;">(${pdfNonUregPct})</span></div>
+          </div>
+        `;
+      }
 
       const pdfReportEl = document.createElement('div');
       pdfReportEl.className = 'pdf-report-container';
@@ -2597,7 +2701,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td style="text-align: right; vertical-align: middle; white-space: nowrap;">
                       <span style="font-size: 9px; color: #e2e8f0; display: inline-block;">
-                        Total: <strong style="color: #ffffff;">${pdfDonutTotal}</strong>
+                        ${pdfDonutBadgeHeader}
                       </span>
                     </td>
                   </tr>
@@ -2609,18 +2713,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       ${donutImgData ? `<img src="${donutImgData}" style="width: 100%; max-width: 135px; height: auto; max-height: 160px; object-fit: contain; display: block; margin: 0 auto; border-radius: 4px;" />` : '<div style="color: #94a3b8; font-size: 11px; padding: 40px 0;">Grafik tidak tersedia</div>'}
                     </td>
                     <td style="width: 47%; vertical-align: middle; padding-left: 6px;">
-                      <div style="background-color: #16243d; border-left: 3px solid #38bdf8; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
-                        <div style="font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">USAK</div>
-                        <div style="font-size: 11px; font-weight: 800; color: #f8fafc; margin-top: 1px;">${pdfUsakVal} <span style="font-size: 8.5px; color: #38bdf8; font-weight: 700;">(${pdfUsakPct})</span></div>
-                      </div>
-                      <div style="background-color: #16243d; border-left: 3px solid #f59e0b; border-radius: 4px; padding: 5px 7px; margin-bottom: 5px;">
-                        <div style="font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">UREG</div>
-                        <div style="font-size: 11px; font-weight: 800; color: #f8fafc; margin-top: 1px;">${pdfUregVal} <span style="font-size: 8.5px; color: #f59e0b; font-weight: 700;">(${pdfUregPct})</span></div>
-                      </div>
-                      <div style="background-color: #16243d; border-left: 3px solid #94a3b8; border-radius: 4px; padding: 5px 7px;">
-                        <div style="font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Non UREG</div>
-                        <div style="font-size: 11px; font-weight: 800; color: #f8fafc; margin-top: 1px;">${pdfNonUregVal} <span style="font-size: 8.5px; color: #cbd5e1; font-weight: 700;">(${pdfNonUregPct})</span></div>
-                      </div>
+                      ${pdfCard2RightHtml}
                     </td>
                   </tr>
                 </table>
