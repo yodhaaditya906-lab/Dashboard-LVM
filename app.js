@@ -130,6 +130,29 @@ document.addEventListener('DOMContentLoaded', () => {
     return upper.includes('NON UREG') || upper.includes('NON-UREG');
   }
 
+  // Fullscreen Cosmic Loading Screen Controllers
+  function setLoadingScreenMessage(msg) {
+    const textEl = document.getElementById('loading-status-text');
+    if (textEl && msg) textEl.textContent = msg;
+  }
+
+  function hideAppLoadingScreen() {
+    const loadingScreen = document.getElementById('app-loading-screen');
+    if (!loadingScreen || loadingScreen.classList.contains('app-loading-hidden')) return;
+    
+    setLoadingScreenMessage('Data Siap! Membuka Dashboard...');
+    
+    setTimeout(() => {
+      loadingScreen.classList.add('app-loading-hidden');
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+      }, 650);
+    }, 250);
+  }
+
+  // Safety net: force dismiss loading screen after 6.5s so user is never locked out
+  setTimeout(hideAppLoadingScreen, 6500);
+
   // Fetch API Endpoint from Node.js Server (Supports manual force sync)
   let isFetchingData = false;
   async function fetchDashboardApi(force = false) {
@@ -146,12 +169,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     pulseDot.className = 'status-pulse syncing';
     syncStatusText.textContent = 'Live Sync: Memperbarui data dari Google Sheets...';
+    setLoadingScreenMessage('Menghubungkan ke Server & Google Sheets...');
 
     try {
       const url = force ? `${API_ENDPOINT}?force=1&t=${Date.now()}` : API_ENDPOINT;
       const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
+      setLoadingScreenMessage('Memproses Data Debitur & Ranking MKA...');
       const data = await response.json();
       if (!data) return;
 
@@ -178,6 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
       renderSgpSummaryTable();
       renderDashboardCharts();
 
+      // Data is fully loaded and DOM rendered: smoothly dismiss loading screen!
+      hideAppLoadingScreen();
+
       const timeStr = new Date().toLocaleTimeString('id-ID');
       pulseDot.className = 'status-pulse';
       syncStatusText.textContent = `Live Data Active • Spreadsheet Terkoneksi (${timeStr})`;
@@ -185,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching dashboard API:', err);
       pulseDot.className = 'status-pulse error';
       syncStatusText.textContent = `Sync Offline: Menampilkan data lokal (${new Date().toLocaleTimeString('id-ID')})`;
+      hideAppLoadingScreen();
     } finally {
       isFetchingData = false;
       if (btnSyncNow) {

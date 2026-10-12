@@ -25,9 +25,41 @@
   </script>
 
   <!-- Custom PowerBI Desktop Replica CSS -->
-  <link rel="stylesheet" href="styles.css?v=3.3">
+  <link rel="stylesheet" href="styles.css?v=3.4">
 </head>
 <body class="powerbi-theme">
+
+  <!-- FULLSCREEN COSMIC LOADING SCREEN (Mandiri Galaxy Theme) -->
+  <div id="app-loading-screen" class="app-loading-overlay">
+    <div class="loading-container">
+      <!-- High-Tech Cosmic Orbital Rings -->
+      <div class="orbital-spinner-wrapper">
+        <div class="orbital-ring ring-outer"></div>
+        <div class="orbital-ring ring-middle"></div>
+        <div class="orbital-ring ring-inner"></div>
+        <div class="orbital-core">
+          <span class="core-sparkle">✦</span>
+        </div>
+      </div>
+      
+      <!-- Brand & Title -->
+      <div class="loading-brand">
+        <h2>BANK MANDIRI</h2>
+        <div class="loading-subtitle">MONITORING DEBITUR SGP & RANKING MKA</div>
+      </div>
+
+      <!-- Live Loading Progress Box -->
+      <div class="loading-progress-box">
+        <div class="loading-status">
+          <span class="loading-dot-pulse"></span>
+          <span id="loading-status-text">Menghubungkan ke Server & Google Sheets...</span>
+        </div>
+        <div class="loading-progress-bar">
+          <div class="loading-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- TOP LIVE SYNC BAR (Clean SGP Viewer Mode) -->
   <div class="top-live-bar">
