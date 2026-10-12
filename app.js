@@ -803,8 +803,8 @@ document.addEventListener('DOMContentLoaded', () => {
           {
             label: currName,
             data: labels.length > 0 ? valCurr : [0],
-            backgroundColor: 'rgba(239, 68, 68, 0.85)', // Coral Red
-            borderColor: '#b91c1c',
+            backgroundColor: 'rgba(168, 85, 247, 0.85)', // Violet Purple
+            borderColor: '#9333ea',
             borderWidth: 1.2,
             borderRadius: 4,
             barPercentage: 0.8,
@@ -918,7 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   ctx.fillText(val.toString(), bar.x, bar.y - 3);
                 } else {
                   // Label angka 0 dengan warna dataset agar terlihat jelas bahwa nilainya nol (bukan hilang)
-                  ctx.fillStyle = datasetIdx === 0 ? '#38bdf8' : '#f87171';
+                  ctx.fillStyle = datasetIdx === 0 ? '#38bdf8' : '#c084fc';
                   ctx.font = 'bold 8.5px "Segoe UI", sans-serif';
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'bottom';
@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (subtitleEl) subtitleEl.textContent = 'September vs Oktober • Rasio Debitur';
       if (badgeLbl) badgeLbl.textContent = 'Sep vs Okt:';
       if (badgeTotal) {
-        badgeTotal.innerHTML = `<span style="color:#38bdf8">${sepStats.total.toLocaleString('id-ID')}</span> <span style="color:#64748b;font-weight:400">vs</span> <span style="color:#f87171">${oktStats.total.toLocaleString('id-ID')}</span>`;
+        badgeTotal.innerHTML = `<span style="color:#38bdf8">${sepStats.total.toLocaleString('id-ID')}</span> <span style="color:#64748b;font-weight:400">vs</span> <span style="color:#c084fc">${oktStats.total.toLocaleString('id-ID')}</span>`;
       }
 
       if (statsPanel) {
@@ -1062,8 +1062,8 @@ document.addEventListener('DOMContentLoaded', () => {
             {
               label: 'Oktober',
               data: [oktStats.usak, oktStats.ureg, oktStats.nonUreg],
-              backgroundColor: 'rgba(239, 68, 68, 0.85)',
-              borderColor: '#b91c1c',
+              backgroundColor: 'rgba(168, 85, 247, 0.85)', // Violet Purple
+              borderColor: '#9333ea',
               borderWidth: 1.2,
               borderRadius: 4,
               barPercentage: 0.82,
@@ -1143,7 +1143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   const labelY = isSep ? (baseY - 13) : (baseY - 2);
                   const labelX = bar.x;
 
-                  c.fillStyle = isSep ? '#38bdf8' : '#f87171';
+                  c.fillStyle = isSep ? '#38bdf8' : '#c084fc';
                   c.font = 'bold 8px "Segoe UI", sans-serif';
                   c.textAlign = 'center';
                   c.textBaseline = 'bottom';
@@ -1841,8 +1841,8 @@ document.addEventListener('DOMContentLoaded', () => {
           ctx.fillStyle = '#4472C4';
           ctx.fillRect(bar1X, plotBottom - h1, barWidth, h1);
 
-          // Bar 2 (Current - Classic Excel Red/Maroon)
-          ctx.fillStyle = '#C00000';
+          // Bar 2 (Current - Classic Excel Purple)
+          ctx.fillStyle = '#7030A0';
           ctx.fillRect(bar2X, plotBottom - h2, barWidth, h2);
 
           // Value labels above bars for crisp comparison
@@ -1891,7 +1891,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Legend Item 2 (Current Month)
           const item2Y = legY + (cfg.legend1Line2 ? 54 : 44);
-          ctx.fillStyle = '#C00000';
+          ctx.fillStyle = '#7030A0';
           ctx.fillRect(legX + 2, item2Y, 10, 10);
           ctx.fillStyle = '#262626';
           ctx.font = '10px Calibri, "Segoe UI", Arial, sans-serif';
@@ -2566,6 +2566,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const pdfSgpAgt = document.getElementById('sgp-badge-val-agt')?.textContent || sepStats.usak.toLocaleString('id-ID');
       const pdfSgpSep = document.getElementById('sgp-badge-val-sep')?.textContent || oktStats.usak.toLocaleString('id-ID');
       const pdfSgpGrowth = document.getElementById('sgp-badge-growth-val')?.textContent || '+0';
+      const pdfSgpGrowthColor = (pdfSgpGrowth && pdfSgpGrowth.trim().startsWith('-')) ? '#f87171' : '#34d399';
 
       const pdfDonutSubtitle = document.getElementById('donut-chart-subtitle')?.textContent || (compositionChartMode === 'compare' ? 'September vs Oktober • Rasio Debitur' : `Rasio USAK, UREG & Non UREG • ${selectedMonth === 'september' ? 'September' : 'Oktober'}`);
 
@@ -2588,7 +2589,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return `<span style="color:#ffffff;font-weight:600;">0 (0.0%)</span>`;
         }
 
-        pdfDonutBadgeHeader = `Sep: <strong style="color:#38bdf8;">${sepStats.total.toLocaleString('id-ID')}</strong> vs Okt: <strong style="color:#f87171;">${oktStats.total.toLocaleString('id-ID')}</strong>`;
+        pdfDonutBadgeHeader = `Sep: <strong style="color:#38bdf8;">${sepStats.total.toLocaleString('id-ID')}</strong> vs Okt: <strong style="color:#c084fc;">${oktStats.total.toLocaleString('id-ID')}</strong>`;
 
         pdfCard2RightHtml = `
           <div style="background-color: #16243d; border-left: 3px solid #38bdf8; border-radius: 4px; padding: 5px 8px; margin-bottom: 5px;">
@@ -2607,7 +2608,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </tr>
               <tr>
                 <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Okt:</td>
-                <td style="font-size: 9.5px; font-weight: 700; color: #f87171; text-align: right; padding: 1.5px 0;">
+                <td style="font-size: 9.5px; font-weight: 700; color: #c084fc; text-align: right; padding: 1.5px 0;">
                   ${oktStats.usak.toLocaleString('id-ID')}
                 </td>
               </tr>
@@ -2629,7 +2630,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </tr>
               <tr>
                 <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Okt:</td>
-                <td style="font-size: 9.5px; font-weight: 700; color: #f87171; text-align: right; padding: 1.5px 0;">
+                <td style="font-size: 9.5px; font-weight: 700; color: #c084fc; text-align: right; padding: 1.5px 0;">
                   ${oktStats.ureg.toLocaleString('id-ID')}
                 </td>
               </tr>
@@ -2651,7 +2652,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </tr>
               <tr>
                 <td style="font-size: 8.5px; color: #94a3b8; padding: 1.5px 0;">Okt:</td>
-                <td style="font-size: 9.5px; font-weight: 700; color: #f87171; text-align: right; padding: 1.5px 0;">
+                <td style="font-size: 9.5px; font-weight: 700; color: #c084fc; text-align: right; padding: 1.5px 0;">
                   ${oktStats.nonUreg.toLocaleString('id-ID')}
                 </td>
               </tr>
@@ -2747,9 +2748,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span style="display: inline-block; width: 7.5px; height: 7.5px; border-radius: 2px; background-color: #38bdf8; margin-right: 4px; vertical-align: middle;"></span>${escapeAttr(pdfSgpLblPrev)} <strong style="color: #ffffff;">${pdfSgpAgt}</strong>
                       </span>
                       <span style="font-size: 9px; color: #e2e8f0; display: inline-block; margin-right: 8px;">
-                        <span style="display: inline-block; width: 7.5px; height: 7.5px; border-radius: 2px; background-color: #ef4444; margin-right: 4px; vertical-align: middle;"></span>${escapeAttr(pdfSgpLblCurr)} <strong style="color: #ffffff;">${pdfSgpSep}</strong>
+                        <span style="display: inline-block; width: 7.5px; height: 7.5px; border-radius: 2px; background-color: #a855f7; margin-right: 4px; vertical-align: middle;"></span>${escapeAttr(pdfSgpLblCurr)} <strong style="color: #ffffff;">${pdfSgpSep}</strong>
                       </span>
-                      <span style="color: #34d399; font-weight: 800; font-size: 9.5px; display: inline-block;">${pdfSgpGrowth}</span>
+                      <span style="color: ${pdfSgpGrowthColor}; font-weight: 800; font-size: 9.5px; display: inline-block;">${pdfSgpGrowth}</span>
                     </td>
                   </tr>
                 </table>
