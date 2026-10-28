@@ -150,8 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 250);
   }
 
-  // Safety net: force dismiss loading screen after 6.5s so user is never locked out
-  setTimeout(hideAppLoadingScreen, 6500);
+  // Safety net: force dismiss loading screen after 15s so user is never locked out if offline
+  setTimeout(hideAppLoadingScreen, 15000);
 
   // Fetch API Endpoint from Node.js Server (Supports manual force sync)
   let isFetchingData = false;

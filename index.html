@@ -29,24 +29,43 @@
 </head>
 <body class="powerbi-theme">
 
-  <!-- FULLSCREEN MINIMALIST LOADING SCREEN (Clean White) -->
+  <!-- FULLSCREEN BANK MANDIRI EXECUTIVE LOADING SCREEN -->
   <div id="app-loading-screen" class="app-loading-overlay">
-    <div class="loading-container">
-      <svg class="minimal-spinner" viewBox="0 0 100 100" width="72" height="72" aria-label="Loading...">
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="1.0" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.92" transform="rotate(30 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.84" transform="rotate(60 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.76" transform="rotate(90 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.68" transform="rotate(120 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.60" transform="rotate(150 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.52" transform="rotate(180 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.44" transform="rotate(210 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.36" transform="rotate(240 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.28" transform="rotate(270 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.20" transform="rotate(300 50 50)" />
-        <line x1="50" y1="14" x2="50" y2="31" stroke="#111827" stroke-width="7.5" stroke-linecap="round" opacity="0.12" transform="rotate(330 50 50)" />
-      </svg>
-      <div class="loading-text">Loading...</div>
+    <div class="mandiri-loading-card">
+      <!-- Mandiri Logo with Liquid Gold Wave -->
+      <div class="mandiri-loading-logo">
+        <span class="mandiri-logo-text">mandırı</span>
+        <div class="mandiri-gold-wave"></div>
+      </div>
+
+      <!-- Glowing Dual-Ring Executive Spinner -->
+      <div class="mandiri-loader-spinner">
+        <div class="spinner-ring outer"></div>
+        <div class="spinner-ring inner"></div>
+        <div class="spinner-core-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <h2 class="loading-title">DASHBOARD LVM</h2>
+      <p class="loading-subtitle">Live Ranking & Monitoring Debitur SGP</p>
+
+      <!-- Dynamic Message from app.js -->
+      <div class="loading-status-badge">
+        <span class="status-pulse-dot"></span>
+        <span id="loading-status-text">Menghubungkan ke Server & Google Sheets...</span>
+      </div>
+
+      <!-- Animated Progress Bar -->
+      <div class="loading-progress-container">
+        <div class="loading-progress-bar"></div>
+      </div>
+
+      <div class="loading-footer-tag">
+        <span>PT Bank Mandiri (Persero) Tbk &bull; Micro Banking Region V / Jakarta 3</span>
+      </div>
     </div>
   </div>
 
