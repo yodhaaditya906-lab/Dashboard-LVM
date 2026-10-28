@@ -130,25 +130,77 @@ document.addEventListener('DOMContentLoaded', () => {
     return upper.includes('NON UREG') || upper.includes('NON-UREG');
   }
 
-  // Fullscreen Cosmic Loading Screen Controllers
+  // Minimalist Black & White Capsule Loading Screen Controllers
+  let currentLoadingPercent = 0;
+  let loadingProgressTimer = null;
+
+  function setMinimalLoadingProgress(pct, statusMsg) {
+    const clampedPct = Math.min(100, Math.max(0, Math.round(pct)));
+    currentLoadingPercent = clampedPct;
+    
+    const fillEl = document.getElementById('minimal-progress-fill');
+    const percentEl = document.getElementById('minimal-loading-percent');
+    const statusEl = document.getElementById('loading-status-text');
+
+    if (fillEl) {
+      fillEl.style.width = clampedPct + '%';
+    }
+    if (percentEl) {
+      percentEl.textContent = clampedPct + '%';
+    }
+    if (statusEl && statusMsg) {
+      statusEl.textContent = statusMsg;
+    }
+  }
+
   function setLoadingScreenMessage(msg) {
     const textEl = document.getElementById('loading-status-text');
     if (textEl && msg) textEl.textContent = msg;
+  }
+
+  function startSmoothLoadingTicker() {
+    setMinimalLoadingProgress(10, 'Menghubungkan ke Server & Google Sheets...');
+    
+    if (loadingProgressTimer) clearInterval(loadingProgressTimer);
+
+    loadingProgressTimer = setInterval(() => {
+      if (currentLoadingPercent < 88) {
+        const remaining = 90 - currentLoadingPercent;
+        const step = Math.max(1, Math.floor(remaining * 0.12));
+        const nextPct = currentLoadingPercent + step;
+        
+        let msg = 'Menghubungkan ke Server & Google Sheets...';
+        if (nextPct >= 35 && nextPct < 65) {
+          msg = 'Mengunduh data debitur & Merchant...';
+        } else if (nextPct >= 65) {
+          msg = 'Menyusun ranking MKA & Unit...';
+        }
+        setMinimalLoadingProgress(nextPct, msg);
+      }
+    }, 120);
   }
 
   function hideAppLoadingScreen() {
     const loadingScreen = document.getElementById('app-loading-screen');
     if (!loadingScreen || loadingScreen.classList.contains('app-loading-hidden')) return;
     
-    setLoadingScreenMessage('Data Siap! Membuka Dashboard...');
+    if (loadingProgressTimer) {
+      clearInterval(loadingProgressTimer);
+      loadingProgressTimer = null;
+    }
+
+    setMinimalLoadingProgress(100, 'Data Siap! Membuka Dashboard...');
     
     setTimeout(() => {
       loadingScreen.classList.add('app-loading-hidden');
       setTimeout(() => {
         loadingScreen.style.display = 'none';
-      }, 650);
-    }, 250);
+      }, 500);
+    }, 320);
   }
+
+  // Start smooth progress ticker immediately on page load
+  startSmoothLoadingTicker();
 
   // Safety net: force dismiss loading screen after 15s so user is never locked out if offline
   setTimeout(hideAppLoadingScreen, 15000);
@@ -169,14 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     pulseDot.className = 'status-pulse syncing';
     syncStatusText.textContent = 'Live Sync: Memperbarui data dari Google Sheets...';
-    setLoadingScreenMessage('Menghubungkan ke Server & Google Sheets...');
 
     try {
       const url = force ? `${API_ENDPOINT}?force=1&t=${Date.now()}` : API_ENDPOINT;
       const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-      setLoadingScreenMessage('Memproses Data Debitur & Ranking MKA...');
+      setMinimalLoadingProgress(92, 'Memproses Data Debitur & Ranking MKA...');
       const data = await response.json();
       if (!data) return;
 
@@ -213,12 +264,14 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching dashboard API:', err);
       pulseDot.className = 'status-pulse error';
       syncStatusText.textContent = `Sync Offline: Menampilkan data lokal (${new Date().toLocaleTimeString('id-ID')})`;
+      setMinimalLoadingProgress(100, 'Memuat data lokal...');
       hideAppLoadingScreen();
     } finally {
       isFetchingData = false;
       if (btnSyncNow) {
         btnSyncNow.disabled = false;
       }
+
       if (syncIcon) syncIcon.classList.remove('spinning');
       if (syncLabel) syncLabel.textContent = 'Refresh Data';
     }

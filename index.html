@@ -29,43 +29,15 @@
 </head>
 <body class="powerbi-theme">
 
-  <!-- FULLSCREEN BANK MANDIRI EXECUTIVE LOADING SCREEN -->
+  <!-- MINIMALIST BLACK & WHITE CAPSULE LOADING SCREEN -->
   <div id="app-loading-screen" class="app-loading-overlay">
-    <div class="mandiri-loading-card">
-      <!-- Mandiri Logo with Liquid Gold Wave -->
-      <div class="mandiri-loading-logo">
-        <span class="mandiri-logo-text">mandırı</span>
-        <div class="mandiri-gold-wave"></div>
+    <div class="minimal-loading-container">
+      <div class="minimal-loading-title">LOADING</div>
+      <div class="minimal-loading-capsule">
+        <div id="minimal-progress-fill" class="minimal-loading-fill" style="width: 10%;"></div>
       </div>
-
-      <!-- Glowing Dual-Ring Executive Spinner -->
-      <div class="mandiri-loader-spinner">
-        <div class="spinner-ring outer"></div>
-        <div class="spinner-ring inner"></div>
-        <div class="spinner-core-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-          </svg>
-        </div>
-      </div>
-
-      <h2 class="loading-title">DASHBOARD LVM</h2>
-      <p class="loading-subtitle">Live Ranking & Monitoring Debitur SGP</p>
-
-      <!-- Dynamic Message from app.js -->
-      <div class="loading-status-badge">
-        <span class="status-pulse-dot"></span>
-        <span id="loading-status-text">Menghubungkan ke Server & Google Sheets...</span>
-      </div>
-
-      <!-- Animated Progress Bar -->
-      <div class="loading-progress-container">
-        <div class="loading-progress-bar"></div>
-      </div>
-
-      <div class="loading-footer-tag">
-        <span>PT Bank Mandiri (Persero) Tbk &bull; Micro Banking Region V / Jakarta 3</span>
-      </div>
+      <div id="minimal-loading-percent" class="minimal-loading-percent">10%</div>
+      <div id="loading-status-text" class="minimal-loading-status">Menghubungkan ke Google Sheets...</div>
     </div>
   </div>
 

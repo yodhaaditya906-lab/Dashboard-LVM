@@ -1887,209 +1887,95 @@ body.powerbi-theme {
 }
 
 /* ==========================================================================
-   FULLSCREEN BANK MANDIRI EXECUTIVE LOADING OVERLAY
+   MINIMALIST BLACK & WHITE CAPSULE LOADING OVERLAY
    ========================================================================== */
 .app-loading-overlay {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(circle at 50% 40%, #0a193b 0%, #050d24 60%, #020614 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  z-index: 999999;
+  background-color: #ffffff;
+  z-index: 9999999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 }
 
 .app-loading-overlay.app-loading-hidden {
   opacity: 0;
   visibility: hidden;
-  transform: scale(1.03);
   pointer-events: none;
 }
 
-.mandiri-loading-card {
-  background: rgba(11, 23, 52, 0.88);
-  border: 1.5px solid rgba(56, 189, 248, 0.3);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(0, 61, 121, 0.4);
-  padding: 40px 48px;
-  max-width: 480px;
-  width: 100%;
+.minimal-loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  position: relative;
-  overflow: hidden;
+  width: 100%;
+  max-width: 540px;
 }
 
-.mandiri-loading-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #003d79, #ffb700, #38bdf8);
-}
-
-.mandiri-loading-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.mandiri-logo-text {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -1px;
-  color: #ffffff;
-}
-
-.mandiri-gold-wave {
-  width: 32px;
-  height: 16px;
-  background: linear-gradient(135deg, #ffb700 0%, #ff8c00 100%);
-  border-radius: 14px 14px 2px 14px;
-  box-shadow: 0 2px 8px rgba(255, 183, 0, 0.5);
-}
-
-.mandiri-loader-spinner {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.spinner-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 3.5px solid transparent;
-}
-
-.spinner-ring.outer {
-  width: 80px;
-  height: 80px;
-  border-top-color: #ffb700;
-  border-right-color: rgba(255, 183, 0, 0.25);
-  animation: mandiriSpinOuter 1.3s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
-}
-
-.spinner-ring.inner {
-  width: 58px;
-  height: 58px;
-  border-bottom-color: #38bdf8;
-  border-left-color: rgba(56, 189, 248, 0.25);
-  animation: mandiriSpinInner 1.1s linear infinite reverse;
-}
-
-.spinner-core-icon {
-  color: #ffb700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 0 6px rgba(255, 183, 0, 0.6));
-}
-
-@keyframes mandiriSpinOuter {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes mandiriSpinInner {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-title {
+.minimal-loading-title {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 21px;
   font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  letter-spacing: 5px;
+  color: #000000;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  line-height: 1;
 }
 
-.loading-subtitle {
-  font-size: 13px;
-  color: #94a3b8;
-  margin-bottom: 20px;
-}
-
-.loading-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 16px;
-  background: rgba(14, 165, 233, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  border-radius: 50px;
-  font-size: 12.5px;
-  color: #38bdf8;
-  font-weight: 600;
-  margin-bottom: 20px;
-  max-width: 100%;
-}
-
-.status-pulse-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #38bdf8;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #38bdf8;
-  animation: pulseDotAnim 1.4s infinite;
-}
-
-@keyframes pulseDotAnim {
-  0% { opacity: 0.4; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.2); }
-  100% { opacity: 0.4; transform: scale(0.9); }
-}
-
-.loading-progress-container {
+.minimal-loading-capsule {
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 18px;
+  max-width: 520px;
+  height: 56px;
+  border: 4.5px solid #000000;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  padding: 4.5px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   position: relative;
+  overflow: hidden;
 }
 
-.loading-progress-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, #ffb700, #38bdf8, transparent);
-  border-radius: 10px;
-  animation: progressIndeterminate 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+.minimal-loading-fill {
+  height: 100%;
+  width: 10%;
+  background-color: #000000;
+  border-radius: 9999px;
+  transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-@keyframes progressIndeterminate {
-  0% { left: -40%; width: 30%; }
-  50% { width: 60%; }
-  100% { left: 100%; width: 30%; }
+.minimal-loading-percent {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  margin-top: 16px;
+  letter-spacing: 0.5px;
 }
 
-.loading-footer-tag {
-  font-size: 11px;
-  color: #64748b;
+.minimal-loading-status {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
   font-weight: 500;
+  color: #666666;
+  margin-top: 8px;
+  letter-spacing: 0.2px;
+  transition: opacity 0.2s ease;
 }
+
+
 
 
 
